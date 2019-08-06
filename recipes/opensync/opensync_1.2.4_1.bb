@@ -9,8 +9,8 @@ SRCREV_core ?= "${AUTOREV}"
 SRCREV_platform ?= "${AUTOREV}"
 SRCREV_vendor ?= "${AUTOREV}"
 
-CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_1.2.1;name=core;destsuffix=git/core"
-PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_1.2.1_1;name=platform;destsuffix=git/platform/rdk"
+CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_1.2.4;name=core;destsuffix=git/core"
+PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_1.2.4;name=platform;destsuffix=git/platform/rdk"
 VENDOR_URI ?= ""
 
 SRC_URI = "${CORE_URI} ${PLATFORM_URI} ${VENDOR_URI}"
