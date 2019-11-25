@@ -2,18 +2,27 @@ SUMMARY = "OpenSync"
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=df3f42ef5870da613e959ac4ecaa1cb8"
 
-DEPENDS = "libev libgpg-error wireless-tools openssl jansson libtool mosquitto openvswitch protobuf-c dbus libpcap openvswitch-native hal-wifi mesh-agent"
+PR = "r1"
+
+inherit python3native
+
+FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
+
+DEPENDS = "libev libgpg-error wireless-tools openssl jansson libtool mosquitto openvswitch protobuf-c dbus libpcap openvswitch-native hal-wifi halinterface mesh-agent python3-kconfiglib-native"
 RDEPENDS_${PN} += "openvswitch"
 
 SRCREV_core ?= "${AUTOREV}"
 SRCREV_platform ?= "${AUTOREV}"
 SRCREV_vendor ?= "${AUTOREV}"
 
-CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_1.2.4;name=core;destsuffix=git/core"
-PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_1.2.4;name=platform;destsuffix=git/platform/rdk"
+CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_1.4.0;name=core;destsuffix=git/core"
+PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_1.4.0;name=platform;destsuffix=git/platform/rdk"
 VENDOR_URI ?= ""
 
 SRC_URI = "${CORE_URI} ${PLATFORM_URI} ${VENDOR_URI}"
+SRC_URI += "file://0001-inet-start-dhcps-always.patch"
+SRC_URI += "file://0002-inet-inject-br-wan-and-br-lan-handling.patch"
+SRC_URI += "file://0003-Use-osync_hal-in-inet_gretap.patch"
 
 SRCREV_FORMAT ?= "core_platform_vendor"
 
