@@ -2,7 +2,7 @@ SUMMARY = "OpenSync"
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=df3f42ef5870da613e959ac4ecaa1cb8"
 
-PR = "r1"
+PR = "r2"
 
 inherit python3native
 
@@ -15,7 +15,7 @@ SRCREV_core ?= "${AUTOREV}"
 SRCREV_platform ?= "${AUTOREV}"
 SRCREV_vendor ?= "${AUTOREV}"
 
-CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_1.4.0;name=core;destsuffix=git/core"
+CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_1.4.0.1;name=core;destsuffix=git/core"
 PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_1.4.0;name=platform;destsuffix=git/platform/rdk"
 VENDOR_URI ?= ""
 
