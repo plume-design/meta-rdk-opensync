@@ -1,7 +1,7 @@
-From 0e1425c06977ed59fd1568c648835df041e8126e Mon Sep 17 00:00:00 2001
+From 8a3f18e45ce1bd022372d2715837c6a4301269d4 Mon Sep 17 00:00:00 2001
 From: Michal Kowalczyk <michal.kowalczyk@plume.com>
 Date: Tue, 15 Oct 2019 14:20:07 +0200
-Subject: [PATCH 2/3] inet: inject br-wan and br-lan handling
+Subject: [PATCH 2/7] inet: inject br-wan and br-lan handling
 
 As the OSN API doesn't allow to override L2 stuff we cannot fully
 utilize it in case of RDK platform which has couple of specific
@@ -9,14 +9,14 @@ interfaces. Those interfaces resides on other CPU so we cannot access
 them directly.
 Those interfaces are accessed using devicenfo.sh script.
 ---
- src/lib/inet/src/inet_eth.c | 104 +++++++++++++++++++++++++++++++++++-
- 1 file changed, 102 insertions(+), 2 deletions(-)
+ src/lib/inet/src/inet_eth.c | 105 +++++++++++++++++++++++++++++++++++-
+ 1 file changed, 103 insertions(+), 2 deletions(-)
 
 diff --git a/src/lib/inet/src/inet_eth.c b/src/lib/inet/src/inet_eth.c
-index 47db5e6c..fd9eb854 100644
+index f1d88e5..2d91411 100644
 --- a/src/lib/inet/src/inet_eth.c
 +++ b/src/lib/inet/src/inet_eth.c
-@@ -13,6 +13,7 @@
+@@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  #include "inet.h"
  #include "inet_base.h"
  #include "inet_eth.h"
@@ -24,7 +24,7 @@ index 47db5e6c..fd9eb854 100644
  
  #include "execsh.h"
  
-@@ -449,6 +450,14 @@ bool ifreq_ioctl(const char *ifname, int cmd, struct ifreq *req)
+@@ -475,6 +476,15 @@ bool ifreq_ioctl(const char *ifname, int cmd, struct ifreq *req)
      return true;
  }
  
@@ -33,13 +33,14 @@ index 47db5e6c..fd9eb854 100644
 + */
 +static bool remote_interface(const char *ifname)
 +{
-+    return (!strcmp(ifname, "br-home") || !strcmp(ifname, "br-wan"));
++    return (!strcmp(ifname, CONFIG_LAN_BRIDGE_NAME)
++            || !strcmp(ifname, CONFIG_WAN_BRIDGE_NAME));
 +}
 +
  /**
   * Check if the interface exists
   */
-@@ -456,6 +465,15 @@ bool ifreq_exists(const char *ifname, bool *exists)
+@@ -482,6 +492,15 @@ bool ifreq_exists(const char *ifname, bool *exists)
  {
      struct ifreq ifr;
  
@@ -55,7 +56,7 @@ index 47db5e6c..fd9eb854 100644
      /* First get the current flags */
      if (!ifreq_ioctl(ifname, SIOCGIFINDEX, &ifr))
      {
-@@ -477,6 +495,11 @@ bool ifreq_status_set(const char *ifname, bool up)
+@@ -503,6 +522,11 @@ bool ifreq_status_set(const char *ifname, bool up)
  {
      struct ifreq ifr;
  
@@ -67,20 +68,7 @@ index 47db5e6c..fd9eb854 100644
      /* First get the current flags */
      if (!ifreq_ioctl(ifname, SIOCGIFFLAGS, &ifr))
      {
-@@ -516,6 +539,12 @@ bool ifreq_status_get(const char *ifname, bool *up)
- {
-     struct ifreq ifr;
- 
-+    if (remote_interface(ifname))
-+    {
-+        *up = true;
-+        return true;
-+    }
-+
-     /* First get the current flags */
-     if (!ifreq_ioctl(ifname, SIOCGIFFLAGS, &ifr))
-     {
-@@ -538,6 +567,12 @@ bool ifreq_running_get(const char *ifname, bool *up)
+@@ -542,6 +566,12 @@ bool ifreq_status_get(const char *ifname, bool *up)
  {
      struct ifreq ifr;
  
@@ -93,7 +81,20 @@ index 47db5e6c..fd9eb854 100644
      /* First get the current flags */
      if (!ifreq_ioctl(ifname, SIOCGIFFLAGS, &ifr))
      {
-@@ -559,6 +594,11 @@ bool ifreq_ipaddr_set(const char *ifname, osn_ip_addr_t ipaddr)
+@@ -564,6 +594,12 @@ bool ifreq_running_get(const char *ifname, bool *up)
+ {
+     struct ifreq ifr;
+ 
++    if (remote_interface(ifname))
++    {
++        *up = true;
++        return true;
++    }
++
+     /* First get the current flags */
+     if (!ifreq_ioctl(ifname, SIOCGIFFLAGS, &ifr))
+     {
+@@ -585,6 +621,11 @@ bool ifreq_ipaddr_set(const char *ifname, osn_ip_addr_t ipaddr)
  {
      struct ifreq ifr;
  
@@ -105,7 +106,7 @@ index 47db5e6c..fd9eb854 100644
      ifr.ifr_addr.sa_family = AF_INET;
      memcpy(&((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr, &ipaddr, sizeof(ipaddr));
      if (!ifreq_ioctl(ifname, SIOCSIFADDR, &ifr))
-@@ -579,9 +619,23 @@ bool ifreq_ipaddr_set(const char *ifname, osn_ip_addr_t ipaddr)
+@@ -605,9 +646,23 @@ bool ifreq_ipaddr_set(const char *ifname, osn_ip_addr_t ipaddr)
  bool ifreq_ipaddr_get(const char *ifname, osn_ip_addr_t *ipaddr)
  {
      struct ifreq ifr;
@@ -129,7 +130,7 @@ index 47db5e6c..fd9eb854 100644
      ifr.ifr_addr.sa_family = AF_INET;
  
      *ipaddr = OSN_IP_ADDR_INIT;
-@@ -603,6 +657,11 @@ bool ifreq_netmask_set(const char *ifname, osn_ip_addr_t netmask)
+@@ -629,6 +684,11 @@ bool ifreq_netmask_set(const char *ifname, osn_ip_addr_t netmask)
  {
      struct ifreq ifr;
  
@@ -141,7 +142,7 @@ index 47db5e6c..fd9eb854 100644
      ifr.ifr_addr.sa_family = AF_INET;
      ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr = netmask.ia_addr;
      if (!ifreq_ioctl(ifname, SIOCSIFNETMASK, &ifr))
-@@ -624,9 +683,14 @@ bool ifreq_netmask_get(const char *ifname, osn_ip_addr_t *netmask)
+@@ -650,9 +710,14 @@ bool ifreq_netmask_get(const char *ifname, osn_ip_addr_t *netmask)
  {
      struct ifreq ifr;
  
@@ -157,7 +158,7 @@ index 47db5e6c..fd9eb854 100644
      if (!ifreq_ioctl(ifname, SIOCGIFNETMASK, &ifr))
      {
          return false;
-@@ -648,6 +712,11 @@ bool ifreq_bcaddr_set(const char *ifname, osn_ip_addr_t bcaddr)
+@@ -674,6 +739,11 @@ bool ifreq_bcaddr_set(const char *ifname, osn_ip_addr_t bcaddr)
  {
      struct ifreq ifr;
  
@@ -169,7 +170,7 @@ index 47db5e6c..fd9eb854 100644
      ifr.ifr_addr.sa_family = AF_INET;
      ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr = bcaddr.ia_addr;
      if (!ifreq_ioctl(ifname, SIOCSIFBRDADDR, &ifr))
-@@ -671,6 +740,11 @@ bool ifreq_bcaddr_get(const char *ifname, osn_ip_addr_t *bcaddr)
+@@ -697,6 +767,11 @@ bool ifreq_bcaddr_get(const char *ifname, osn_ip_addr_t *bcaddr)
  
      *bcaddr = OSN_IP_ADDR_INIT;
  
@@ -181,7 +182,7 @@ index 47db5e6c..fd9eb854 100644
      ifr.ifr_addr.sa_family = AF_INET;
  
      if (!ifreq_ioctl(ifname, SIOCGIFBRDADDR, &ifr))
-@@ -693,6 +767,11 @@ bool ifreq_mtu_set(const char *ifname, int mtu)
+@@ -719,6 +794,11 @@ bool ifreq_mtu_set(const char *ifname, int mtu)
  {
      struct ifreq ifr;
  
@@ -193,7 +194,7 @@ index 47db5e6c..fd9eb854 100644
      ifr.ifr_mtu = mtu;
  
      if (!ifreq_ioctl(ifname, SIOCSIFMTU, &ifr))
-@@ -714,6 +793,12 @@ bool ifreq_mtu_get(const char *ifname, int *mtu)
+@@ -740,6 +820,12 @@ bool ifreq_mtu_get(const char *ifname, int *mtu)
  {
      struct ifreq ifr;
  
@@ -206,7 +207,7 @@ index 47db5e6c..fd9eb854 100644
      if (!ifreq_ioctl(ifname, SIOCGIFMTU, &ifr))
      {
          LOG(ERR, "inet_eth: %s: SIOCGIFMTU failed. Error retrieving the MTU: %s",
-@@ -735,6 +820,22 @@ bool ifreq_mtu_get(const char *ifname, int *mtu)
+@@ -761,6 +847,22 @@ bool ifreq_mtu_get(const char *ifname, int *mtu)
  bool ifreq_hwaddr_get(const char *ifname, osn_mac_addr_t *macaddr)
  {
      struct ifreq ifr;
@@ -229,7 +230,7 @@ index 47db5e6c..fd9eb854 100644
  
      /* Get the MAC(hardware) address */
      if (!ifreq_ioctl(ifname, SIOCGIFHWADDR, &ifr))
-@@ -746,7 +847,6 @@ bool ifreq_hwaddr_get(const char *ifname, osn_mac_addr_t *macaddr)
+@@ -772,7 +874,6 @@ bool ifreq_hwaddr_get(const char *ifname, osn_mac_addr_t *macaddr)
          return false;
      }
  
@@ -238,5 +239,5 @@ index 47db5e6c..fd9eb854 100644
      memcpy(macaddr->ma_addr, ifr.ifr_addr.sa_data, sizeof(macaddr->ma_addr));
  
 -- 
-2.17.1
+2.25.1
 

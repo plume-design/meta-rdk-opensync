@@ -1,20 +1,19 @@
-From 95b2ee6db408ca9092d1cfd9a78c9d99dd5f00c2 Mon Sep 17 00:00:00 2001
+From ccef7ab993af9bb18c502c0f2d729520df4e959c Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
 Date: Tue, 29 Oct 2019 11:00:34 +0000
-Subject: [PATCH 3/3] Use osync_hal in
- inet_gretap
+Subject: [PATCH 3/7] Use osync_hal in inet_gretap
 
 RDK platform abstracts GRE tunneling. Those platform also need parent
 interface mapping.
 ---
- src/lib/inet/src/linux/inet_gretap.c | 58 ++++++++----------------------------
+ src/lib/inet/src/linux/inet_gretap.c | 58 +++++++---------------------
  1 file changed, 13 insertions(+), 45 deletions(-)
 
 diff --git a/src/lib/inet/src/linux/inet_gretap.c b/src/lib/inet/src/linux/inet_gretap.c
-index fcc62c0..cd4d420 100644
+index 0bef863..96ad131 100644
 --- a/src/lib/inet/src/linux/inet_gretap.c
 +++ b/src/lib/inet/src/linux/inet_gretap.c
-@@ -18,12 +18,9 @@
+@@ -44,12 +44,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  
  #include "execsh.h"
  
@@ -29,7 +28,7 @@ index fcc62c0..cd4d420 100644
  /*
   * inet_gretap_t was selected as the default tunnelling
   * implementation -- return an instance with inet_gretap_new()
-@@ -40,7 +37,6 @@ inet_t *inet_gre_new(const char *ifname)
+@@ -66,7 +63,6 @@ inet_t *inet_gre_new(const char *ifname)
  
      return inet_gretap_new(ifname);
  }
@@ -37,7 +36,7 @@ index fcc62c0..cd4d420 100644
  
  /*
   * ===========================================================================
-@@ -133,41 +129,11 @@ bool inet_gretap_ip4tunnel_set(
+@@ -159,41 +155,11 @@ bool inet_gretap_ip4tunnel_set(
   * ===========================================================================
   */
  
@@ -79,7 +78,7 @@ index fcc62c0..cd4d420 100644
      char slocal_addr[C_IP4ADDR_LEN];
      char sremote_addr[C_IP4ADDR_LEN];
  
-@@ -194,15 +160,18 @@ bool inet_gretap_interface_start(inet_gretap_t *self, bool enable)
+@@ -220,15 +186,18 @@ bool inet_gretap_interface_start(inet_gretap_t *self, bool enable)
          snprintf(slocal_addr, sizeof(slocal_addr), PRI_osn_ip_addr, FMT_osn_ip_addr(self->in_local_addr));
          snprintf(sremote_addr, sizeof(sremote_addr), PRI_osn_ip_addr, FMT_osn_ip_addr(self->in_remote_addr));
  
@@ -105,7 +104,7 @@ index fcc62c0..cd4d420 100644
              return false;
          }
  
-@@ -210,8 +179,7 @@ bool inet_gretap_interface_start(inet_gretap_t *self, bool enable)
+@@ -236,8 +205,7 @@ bool inet_gretap_interface_start(inet_gretap_t *self, bool enable)
      }
      else
      {
@@ -116,5 +115,5 @@ index fcc62c0..cd4d420 100644
              LOG(ERR, "inet_gretap: %s: Error deleting GRETAP interface.", self->inet.in_ifname);
          }
 -- 
-1.9.1
+2.25.1
 
