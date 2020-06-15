@@ -1,6 +1,6 @@
-From 8a3f18e45ce1bd022372d2715837c6a4301269d4 Mon Sep 17 00:00:00 2001
+From e8551bf4100d640971e7ab443146ca87cdadce60 Mon Sep 17 00:00:00 2001
 From: Michal Kowalczyk <michal.kowalczyk@plume.com>
-Date: Tue, 15 Oct 2019 14:20:07 +0200
+Date: Wed, 1 Apr 2020 14:27:59 +0200
 Subject: [PATCH 2/7] inet: inject br-wan and br-lan handling
 
 As the OSN API doesn't allow to override L2 stuff we cannot fully
@@ -13,7 +13,7 @@ Those interfaces are accessed using devicenfo.sh script.
  1 file changed, 103 insertions(+), 2 deletions(-)
 
 diff --git a/src/lib/inet/src/inet_eth.c b/src/lib/inet/src/inet_eth.c
-index f1d88e5..2d91411 100644
+index f1d88e5..a3ce8e8 100644
 --- a/src/lib/inet/src/inet_eth.c
 +++ b/src/lib/inet/src/inet_eth.c
 @@ -39,6 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -33,8 +33,8 @@ index f1d88e5..2d91411 100644
 + */
 +static bool remote_interface(const char *ifname)
 +{
-+    return (!strcmp(ifname, CONFIG_LAN_BRIDGE_NAME)
-+            || !strcmp(ifname, CONFIG_WAN_BRIDGE_NAME));
++    return (!strcmp(ifname, CONFIG_RDK_LAN_BRIDGE_NAME)
++            || !strcmp(ifname, CONFIG_RDK_WAN_BRIDGE_NAME));
 +}
 +
  /**

@@ -2,7 +2,7 @@ SUMMARY = "OpenSync"
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=df3f42ef5870da613e959ac4ecaa1cb8"
 
-PR = "r3"
+PR = "r4"
 
 inherit python3native
 
@@ -18,18 +18,18 @@ SRCREV_platform ?= "${AUTOREV}"
 SRCREV_vendor ?= "${AUTOREV}"
 
 CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_1.4.0.1;name=core;destsuffix=git/core"
-PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_1.4.0.2;name=platform;destsuffix=git/platform/rdk"
+CORE_URI += "file://0001-inet-start-dhcps-always.patch"
+CORE_URI += "file://0002-inet-inject-br-wan-and-br-lan-handling.patch"
+CORE_URI += "file://0003-Use-osync_hal-in-inet_gretap.patch"
+CORE_URI += "file://0004-Use-osync_hal-in-inet_vlan.patch"
+CORE_URI += "file://0005-Add-vlan-support.patch"
+CORE_URI += "file://0006-Fix-conflict-with-yocto-kernel-tools-kconfiglib.patch"
+CORE_URI += "file://0007-bm-fix-HWM-configuration.patch"
+
+PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_1.4.0.3;name=platform;destsuffix=git/platform/rdk"
 VENDOR_URI ?= ""
 
 SRC_URI = "${CORE_URI} ${PLATFORM_URI} ${VENDOR_URI}"
-SRC_URI += "file://0001-inet-start-dhcps-always.patch"
-SRC_URI += "file://0002-inet-inject-br-wan-and-br-lan-handling.patch"
-SRC_URI += "file://0003-Use-osync_hal-in-inet_gretap.patch"
-SRC_URI += "file://0004-Use-osync_hal-in-inet_vlan.patch"
-SRC_URI += "file://0005-Add-vlan-support.patch"
-SRC_URI += "file://0006-Add-support-for-parent_ifname-for-NM.patch"
-SRC_URI += "file://0007-Fix-conflict-with-yocto-kernel-tools-kconfiglib.patch"
-
 SRCREV_FORMAT ?= "core_platform_vendor"
 
 S = "${WORKDIR}/git/core"
