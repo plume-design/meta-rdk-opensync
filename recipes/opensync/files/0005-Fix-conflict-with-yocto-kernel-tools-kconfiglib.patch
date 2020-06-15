@@ -1,17 +1,17 @@
-From 86dead9762bc0a252b388497058edd9e630e239a Mon Sep 17 00:00:00 2001
+From 5498b7bc4abb20314f00ae33df6818f0377fbe0b Mon Sep 17 00:00:00 2001
 From: Mateusz Bajorski <mbajorski@plume.com>
 Date: Mon, 2 Mar 2020 14:24:20 +0100
-Subject: [PATCH 6/7] Fix conflict with yocto-kernel-tools kconfiglib
+Subject: [PATCH 5/5] Fix conflict with yocto-kernel-tools kconfiglib
 
 ---
  build/kconfig.mk | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/build/kconfig.mk b/build/kconfig.mk
-index 89588e3..1dc2570 100644
+index af471bd..7e3d947 100644
 --- a/build/kconfig.mk
 +++ b/build/kconfig.mk
-@@ -95,7 +95,7 @@ $(KCONFIG_WORK): $(KCONFIG)
+@@ -107,7 +107,7 @@ $(KCONFIG_WORK): $(KCONFIG)
  	@echo "$(call COLOR_GREEN,Generating kconfig file and headers: $(KCONFIG_WORK))"
  	$(Q)mkdir -p "$(KWORKDIR)"
  	$(Q)kconfig/diffconfig --unminimize  --config "$(KCONFIG)" --out "$(KCONFIG_WORK)" kconfig/Kconfig
@@ -20,7 +20,7 @@ index 89588e3..1dc2570 100644
  
  .PHONY: _kconfig_target_check
  _kconfig_target_check:
-@@ -109,7 +109,7 @@ _kconfig_update:
+@@ -123,7 +123,7 @@ _kconfig_update:
  
  .PHONY: _menuconfig
  _menuconfig: $(KCONFIG_WORK)

@@ -1,7 +1,7 @@
-From 58bb55d5cd9328e6aa9365bdc2982d39fced3fd4 Mon Sep 17 00:00:00 2001
+From 57ab105e4cc6ad88258fdcceabdbb80f1307a4f8 Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
-Date: Mon, 24 Feb 2020 13:12:42 +0000
-Subject: [PATCH 5/7] Add vlan support
+Date: Mon, 27 Apr 2020 11:47:20 +0000
+Subject: [PATCH 4/5] Add vlan support
 
 vlan_id is prescribed from Wifi_Inet_Config to Wifi_Inet_State
 ---
@@ -11,10 +11,10 @@ vlan_id is prescribed from Wifi_Inet_Config to Wifi_Inet_State
  3 files changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/src/nm2/inc/nm2_iface.h b/src/nm2/inc/nm2_iface.h
-index bc4286a..f689f74 100644
+index bafe1b6..f128dad 100644
 --- a/src/nm2/inc/nm2_iface.h
 +++ b/src/nm2/inc/nm2_iface.h
-@@ -153,6 +153,8 @@ struct nm2_iface
+@@ -154,6 +154,8 @@ struct nm2_iface
          uint8_t                     gre_remote_inet_addr[NM2_IFACE_INET_CONFIG_SZ(gre_remote_inet_addr)];
          bool                        gre_local_inet_addr_exists;
          uint8_t                     gre_local_inet_addr[NM2_IFACE_INET_CONFIG_SZ(gre_local_inet_addr)];
@@ -24,10 +24,10 @@ index bc4286a..f689f74 100644
      if_cache;
  };
 diff --git a/src/nm2/src/nm2_inet_config.c b/src/nm2/src/nm2_inet_config.c
-index 94109a1..a164e46 100644
+index 9d47d43..76eb9d7 100644
 --- a/src/nm2/src/nm2_inet_config.c
 +++ b/src/nm2/src/nm2_inet_config.c
-@@ -810,6 +810,8 @@ void nm2_inet_copy(
+@@ -966,6 +966,8 @@ void nm2_inet_copy(
      NM2_IFACE_INET_CONFIG_COPY(piface->if_cache.gre_remote_inet_addr, iconf->gre_remote_inet_addr);
      piface->if_cache.gre_local_inet_addr_exists = iconf->gre_local_inet_addr_exists;
      NM2_IFACE_INET_CONFIG_COPY(piface->if_cache.gre_local_inet_addr, iconf->gre_local_inet_addr);
@@ -37,10 +37,10 @@ index 94109a1..a164e46 100644
  
  
 diff --git a/src/nm2/src/nm2_inet_state.c b/src/nm2/src/nm2_inet_state.c
-index 95ab308..53434b9 100644
+index e9dc585..e09accd 100644
 --- a/src/nm2/src/nm2_inet_state.c
 +++ b/src/nm2/src/nm2_inet_state.c
-@@ -215,9 +215,10 @@ void nm2_inet_state_to_schema(
+@@ -221,9 +221,10 @@ void nm2_inet_state_to_schema(
      NM2_IFACE_INET_CONFIG_COPY(pstate->gre_remote_inet_addr, piface->if_cache.gre_remote_inet_addr);
      pstate->gre_local_inet_addr_exists = piface->if_cache.gre_local_inet_addr_exists;
      NM2_IFACE_INET_CONFIG_COPY(pstate->gre_local_inet_addr, piface->if_cache.gre_local_inet_addr);

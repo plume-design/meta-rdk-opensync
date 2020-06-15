@@ -1,44 +1,29 @@
-From ccef7ab993af9bb18c502c0f2d729520df4e959c Mon Sep 17 00:00:00 2001
+From 00f0f7689048475f5af31e97a334355efb08b840 Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
-Date: Tue, 29 Oct 2019 11:00:34 +0000
-Subject: [PATCH 3/7] Use osync_hal in inet_gretap
+Date: Fri, 5 Jun 2020 09:48:17 +0000
+Subject: [PATCH 2/5] Use osync_hal in inet_gretap
 
 RDK platform abstracts GRE tunneling. Those platform also need parent
 interface mapping.
 ---
- src/lib/inet/src/linux/inet_gretap.c | 58 +++++++---------------------
- 1 file changed, 13 insertions(+), 45 deletions(-)
+ src/lib/inet/src/linux/inet_gretap.c | 53 ++++++++--------------------
+ 1 file changed, 15 insertions(+), 38 deletions(-)
 
 diff --git a/src/lib/inet/src/linux/inet_gretap.c b/src/lib/inet/src/linux/inet_gretap.c
-index 0bef863..96ad131 100644
+index 899608e..6c215d7 100644
 --- a/src/lib/inet/src/linux/inet_gretap.c
 +++ b/src/lib/inet/src/linux/inet_gretap.c
-@@ -44,12 +44,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+@@ -44,35 +44,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  
  #include "execsh.h"
  
--#if !defined(CONFIG_USE_KCONFIG) && !defined(CONFIG_INET_GRE_USE_SOFTWDS)
--/* Default to gretap */
--#define CONFIG_INET_GRE_USE_GRETAP
--#endif
 +#include "target.h"
 +#include "osync_hal.h"
- 
--#if defined(CONFIG_INET_GRE_USE_GRETAP)
- /*
-  * inet_gretap_t was selected as the default tunnelling
-  * implementation -- return an instance with inet_gretap_new()
-@@ -66,7 +63,6 @@ inet_t *inet_gre_new(const char *ifname)
- 
-     return inet_gretap_new(ifname);
- }
--#endif
- 
- /*
-  * ===========================================================================
-@@ -159,41 +155,11 @@ bool inet_gretap_ip4tunnel_set(
-  * ===========================================================================
-  */
++
+ #if !defined(CONFIG_INET_GRE_USE_SOFTWDS) && !defined(CONFIG_INET_GRE_USE_GRETAP)
+ /* Default to gretap */
+ #define CONFIG_INET_GRE_USE_GRETAP
+ #endif
  
 -/*
 - * $1 - interface name
@@ -48,10 +33,6 @@ index 0bef863..96ad131 100644
 - */
 -static char gre_create_gretap[] =
 -_S(
--    if [ -e "/sys/class/net/$1" ];
--    then
--        ip link del "$1";
--    fi;
 -    ip link add "$1" type gretap local "$3" remote "$4" dev "$2" tos 1;
 -#ifdef WAR_GRE_MAC
 -    /* Set the same MAC address for GRE as WiFI STA and enable locally administered bit */
@@ -68,9 +49,22 @@ index 0bef863..96ad131 100644
 -    ip link del "$1"
 -);
 -
+ #if defined(CONFIG_INET_GRE_USE_GRETAP)
+ /*
+  * inet_gretap_t was selected as the default tunnelling
+@@ -122,10 +101,7 @@ inet_t *inet_gretap_new(const char *ifname)
+ 
+ bool inet_gretap_init(inet_gretap_t *self, const char *ifname)
+ {
+-    int status;
 -
- /**
-  * Create/destroy the GRETAP interface
+-    status = execsh_log(LOG_SEVERITY_INFO, gre_delete_gretap, (char *)ifname);
+-    if (WEXITSTATUS(status) != 0)
++    if (osync_hal_inet_destroy_gre(ifname) != OSYNC_HAL_SUCCESS)
+     {
+         LOG(ERR, "inet_gretap: %s: Error initializing GRETAP interface.", ifname);
+         return false;
+@@ -196,7 +172,6 @@ bool inet_gretap_ip4tunnel_set(
   */
  bool inet_gretap_interface_start(inet_gretap_t *self, bool enable)
  {
@@ -78,7 +72,7 @@ index 0bef863..96ad131 100644
      char slocal_addr[C_IP4ADDR_LEN];
      char sremote_addr[C_IP4ADDR_LEN];
  
-@@ -220,15 +186,18 @@ bool inet_gretap_interface_start(inet_gretap_t *self, bool enable)
+@@ -223,15 +198,18 @@ bool inet_gretap_interface_start(inet_gretap_t *self, bool enable)
          snprintf(slocal_addr, sizeof(slocal_addr), PRI_osn_ip_addr, FMT_osn_ip_addr(self->in_local_addr));
          snprintf(sremote_addr, sizeof(sremote_addr), PRI_osn_ip_addr, FMT_osn_ip_addr(self->in_remote_addr));
  
@@ -104,7 +98,7 @@ index 0bef863..96ad131 100644
              return false;
          }
  
-@@ -236,8 +205,7 @@ bool inet_gretap_interface_start(inet_gretap_t *self, bool enable)
+@@ -239,8 +217,7 @@ bool inet_gretap_interface_start(inet_gretap_t *self, bool enable)
      }
      else
      {

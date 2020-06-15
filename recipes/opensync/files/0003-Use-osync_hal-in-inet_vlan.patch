@@ -1,7 +1,7 @@
-From 98580b1179353e9dd240ba7808ea96356192db2a Mon Sep 17 00:00:00 2001
+From 7a913073001acf24a53fe9a4693877cef680f84e Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
-Date: Thu, 16 Jan 2020 08:03:44 +0000
-Subject: [PATCH 4/7] Use osync_hal in inet_vlan
+Date: Mon, 27 Apr 2020 11:39:36 +0000
+Subject: [PATCH 3/5] Use osync_hal in inet_vlan
 
 RDK platform abstracts vlans creation/destruction.
 ---
@@ -9,7 +9,7 @@ RDK platform abstracts vlans creation/destruction.
  1 file changed, 14 insertions(+), 46 deletions(-)
 
 diff --git a/src/lib/inet/src/linux/inet_vlan.c b/src/lib/inet/src/linux/inet_vlan.c
-index 2592f44..aee6178 100644
+index 463dc1c..d35ad19 100644
 --- a/src/lib/inet/src/linux/inet_vlan.c
 +++ b/src/lib/inet/src/linux/inet_vlan.c
 @@ -41,6 +41,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
