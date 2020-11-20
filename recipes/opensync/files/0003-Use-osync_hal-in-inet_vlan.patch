@@ -1,7 +1,7 @@
-From 7a913073001acf24a53fe9a4693877cef680f84e Mon Sep 17 00:00:00 2001
+From 8af91e1e104eb6e47d7e41ed9427d0433bb7d477 Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
 Date: Mon, 27 Apr 2020 11:39:36 +0000
-Subject: [PATCH 3/5] Use osync_hal in inet_vlan
+Subject: [PATCH 3/7] Use osync_hal in inet_vlan
 
 RDK platform abstracts vlans creation/destruction.
 ---

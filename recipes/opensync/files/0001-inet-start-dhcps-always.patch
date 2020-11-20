@@ -1,7 +1,7 @@
-From ccfb90aebe5eb7845aa03d946fc6b3982baffadd Mon Sep 17 00:00:00 2001
+From d2c052a85347477866cee5808f7c6244d3d133b2 Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
 Date: Mon, 27 Apr 2020 10:06:53 +0000
-Subject: [PATCH 1/5] inet: start dhcps always
+Subject: [PATCH 1/7] inet: start dhcps always
 
 This patch enables the dhcp server by default. 3rd party platforms
 (for instance RDK-based) need this, as the dhcp server is independent of

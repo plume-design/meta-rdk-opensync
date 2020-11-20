@@ -1,7 +1,7 @@
-From 57ab105e4cc6ad88258fdcceabdbb80f1307a4f8 Mon Sep 17 00:00:00 2001
+From d65066c8f43f086ddca760273feb464b05fad3f0 Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
 Date: Mon, 27 Apr 2020 11:47:20 +0000
-Subject: [PATCH 4/5] Add vlan support
+Subject: [PATCH 4/7] Add vlan support
 
 vlan_id is prescribed from Wifi_Inet_Config to Wifi_Inet_State
 ---

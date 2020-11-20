@@ -1,0 +1,49 @@
+From c259f8f37208f8353a9469dec00bccaba067b85a Mon Sep 17 00:00:00 2001
+From: Cyprian Lech <clech@plume.com>
+Date: Wed, 30 Sep 2020 10:55:23 +0000
+Subject: [PATCH 7/7] Don't report 2.4G LWM XING for GW only
+
+Without this patch, the watermarks for 2.4G connected STA in "GW only"
+location are (for LWM=20 HWM=35 set in OVSDB):
+
+rssi_probe_lwm = 0
+rssi_probe_hwm = 35
+rssi_auth_lwm = 0
+rssi_auth_hwm = 35
+rssi_low_xing = 20
+rssi_high_xing = 35
+
+It effectively means that if STA's SNR is 'jumping' around 20 the kicks
+are issued altough the STA has already a weak signal and is already on
+2.4 band and there are no other leafs to connect.
+
+This patch sets the rssi_low_xing to 0, so driver doesn't send the LWM
+xings events at all for 2.4GHz connected STA.
+
+This change has an impact on Client Steering, as the LWM xing is used
+for stationary devices to detect it's not stationary anymore. However,
+the SNR change is also reported in PROBE events and Client Steering will
+be cancaled if the SNR received in PROBE event changed.
+
+Signed-off-by: Michal Kowalczyk michal.kowalczyk@plume.com
+---
+ src/bm/src/bm_client.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/bm/src/bm_client.c b/src/bm/src/bm_client.c
+index 7a8d093..1447c42 100644
+--- a/src/bm/src/bm_client.c
++++ b/src/bm/src/bm_client.c
+@@ -247,6 +247,9 @@ bm_client_to_bsal_conf_bs(bm_client_t *client, bm_group_t *group, radio_type_t r
+         if (client->pref_allowed == BM_CLIENT_PREF_ALLOWED_HWM)
+             dest->rssi_probe_lwm = 0;
+ 
++        if (group->gw_only)
++            dest->rssi_low_xing = 0;
++
+         if( client->pre_assoc_auth_block ) {
+             LOGT( "Client '%s': Blocking auth requests for"
+                   " pre-assocation band steering", client->mac_addr );
+-- 
+2.25.1
+

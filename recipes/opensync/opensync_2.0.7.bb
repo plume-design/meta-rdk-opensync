@@ -17,14 +17,16 @@ SRCREV_core ?= "${AUTOREV}"
 SRCREV_platform ?= "${AUTOREV}"
 SRCREV_vendor ?= "${AUTOREV}"
 
-CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_2.0.5;name=core;destsuffix=git/core"
+CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_2.0.7;name=core;destsuffix=git/core"
 CORE_URI += "file://0001-inet-start-dhcps-always.patch"
 CORE_URI += "file://0002-Use-osync_hal-in-inet_gretap.patch"
 CORE_URI += "file://0003-Use-osync_hal-in-inet_vlan.patch"
 CORE_URI += "file://0004-Add-vlan-support.patch"
 CORE_URI += "file://0005-Fix-conflict-with-yocto-kernel-tools-kconfiglib.patch"
+CORE_URI += "file://0006-lnx_netlink-VIF-ifaces-get-IP-in-Wifi_Inet_State.patch"
+CORE_URI += "file://0007-Don-t-report-2.4G-LWM-XING-for-GW-only.patch"
 
-PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_2.0.5;name=platform;destsuffix=git/platform/rdk"
+PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_2.0.7;name=platform;destsuffix=git/platform/rdk"
 VENDOR_URI ?= ""
 
 SRC_URI = "${CORE_URI} ${PLATFORM_URI} ${VENDOR_URI}"
