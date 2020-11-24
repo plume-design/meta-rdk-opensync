@@ -1,9 +1,8 @@
-From d65066c8f43f086ddca760273feb464b05fad3f0 Mon Sep 17 00:00:00 2001
+From fd84ad1328d032f7087ccb002329209cbf968531 Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
-Date: Mon, 27 Apr 2020 11:47:20 +0000
-Subject: [PATCH 4/7] Add vlan support
+Date: Mon, 26 Oct 2020 12:37:08 +0000
+Subject: [PATCH 5/6] Add vlan support
 
-vlan_id is prescribed from Wifi_Inet_Config to Wifi_Inet_State
 ---
  src/nm2/inc/nm2_iface.h       | 2 ++
  src/nm2/src/nm2_inet_config.c | 2 ++
@@ -11,10 +10,10 @@ vlan_id is prescribed from Wifi_Inet_Config to Wifi_Inet_State
  3 files changed, 6 insertions(+), 1 deletion(-)
 
 diff --git a/src/nm2/inc/nm2_iface.h b/src/nm2/inc/nm2_iface.h
-index bafe1b6..f128dad 100644
+index ac1246f..1fae459 100644
 --- a/src/nm2/inc/nm2_iface.h
 +++ b/src/nm2/inc/nm2_iface.h
-@@ -154,6 +154,8 @@ struct nm2_iface
+@@ -157,6 +157,8 @@ struct nm2_iface
          uint8_t                     gre_remote_inet_addr[NM2_IFACE_INET_CONFIG_SZ(gre_remote_inet_addr)];
          bool                        gre_local_inet_addr_exists;
          uint8_t                     gre_local_inet_addr[NM2_IFACE_INET_CONFIG_SZ(gre_local_inet_addr)];
@@ -24,10 +23,10 @@ index bafe1b6..f128dad 100644
      if_cache;
  };
 diff --git a/src/nm2/src/nm2_inet_config.c b/src/nm2/src/nm2_inet_config.c
-index 9d47d43..76eb9d7 100644
+index 32f2dcc..daa9da9 100644
 --- a/src/nm2/src/nm2_inet_config.c
 +++ b/src/nm2/src/nm2_inet_config.c
-@@ -966,6 +966,8 @@ void nm2_inet_copy(
+@@ -993,6 +993,8 @@ void nm2_inet_copy(
      NM2_IFACE_INET_CONFIG_COPY(piface->if_cache.gre_remote_inet_addr, iconf->gre_remote_inet_addr);
      piface->if_cache.gre_local_inet_addr_exists = iconf->gre_local_inet_addr_exists;
      NM2_IFACE_INET_CONFIG_COPY(piface->if_cache.gre_local_inet_addr, iconf->gre_local_inet_addr);

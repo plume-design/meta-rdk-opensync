@@ -8,7 +8,7 @@ inherit python3native
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-DEPENDS = "libev libgpg-error wireless-tools openssl jansson libtool mosquitto openvswitch protobuf-c dbus libpcap openvswitch-native hal-wifi halinterface mesh-agent python3-kconfiglib-native coreutils-native python3-jinja2-native"
+DEPENDS = "libev libgpg-error wireless-tools openssl jansson libtool mosquitto openvswitch protobuf-c dbus libpcap openvswitch-native hal-wifi halinterface mesh-agent python3-kconfiglib-native coreutils-native python3-jinja2-native python3-markupsafe-native"
 RDEPENDS_${PN} += "openvswitch"
 
 inherit python3native
@@ -17,19 +17,19 @@ SRCREV_core ?= "${AUTOREV}"
 SRCREV_platform ?= "${AUTOREV}"
 SRCREV_vendor ?= "${AUTOREV}"
 
-CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_2.0.7;name=core;destsuffix=git/core"
+CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_2.2.4;name=core;destsuffix=git/core"
 CORE_URI += "file://0001-inet-start-dhcps-always.patch"
 CORE_URI += "file://0002-Use-osync_hal-in-inet_gretap.patch"
-CORE_URI += "file://0003-Use-osync_hal-in-inet_vlan.patch"
-CORE_URI += "file://0004-Add-vlan-support.patch"
-CORE_URI += "file://0005-Fix-conflict-with-yocto-kernel-tools-kconfiglib.patch"
-CORE_URI += "file://0006-lnx_netlink-VIF-ifaces-get-IP-in-Wifi_Inet_State.patch"
-CORE_URI += "file://0007-Don-t-report-2.4G-LWM-XING-for-GW-only.patch"
+CORE_URI += "file://0003-Fix-conflict-with-yocto-kernel-tools-kconfiglib.patch"
+CORE_URI += "file://0004-Remove-target_bsal_client_measure-from-core.patch"
+CORE_URI += "file://0005-Add-vlan-support.patch"
+CORE_URI += "file://0006-Fix-xing-events.patch"
 
-PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_2.0.7;name=platform;destsuffix=git/platform/rdk"
+PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_2.2.4;name=platform;destsuffix=git/platform/rdk"
+SERVICE_PROVIDER_URI ?= ""
 VENDOR_URI ?= ""
 
-SRC_URI = "${CORE_URI} ${PLATFORM_URI} ${VENDOR_URI}"
+SRC_URI = "${CORE_URI} ${PLATFORM_URI} ${VENDOR_URI} ${SERVICE_PROVIDER_URI}"
 SRCREV_FORMAT ?= "core_platform_vendor"
 
 S = "${WORKDIR}/git/core"
@@ -64,14 +64,20 @@ do_install_append() {
 }
 
 FILES_${PN} = " \
-    ${prefix}/sbin/* \
-    ${prefix}/opensync/* \
-    ${prefix}/opensync/.* \
+    ${prefix}/${PN}/* \
+    ${prefix}/${PN}/.* \
 "
 
 FILES_${PN}-dbg = " \
     ${prefix}/src/debug \
-    ${prefix}/opensync/**/.debug \
+    ${prefix}/${PN}/**/.debug \
 "
 
-PACKAGES = "${PN}-dbg ${PN}"
+FILES_${PN}-dev = " \
+    ${prefix}/${PN}/tools/wifi_hal_test \
+    ${prefix}/${PN}/tools/bs_cmd \
+    ${prefix}/${PN}/tools/bs_testd \
+    ${prefix}/${PN}/tools/band_steering_test \
+"
+
+PACKAGES = "${PN}-dbg ${PN}-dev ${PN}"

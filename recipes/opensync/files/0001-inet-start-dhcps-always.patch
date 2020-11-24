@@ -1,7 +1,7 @@
-From d2c052a85347477866cee5808f7c6244d3d133b2 Mon Sep 17 00:00:00 2001
+From 980a86df142f6d04aaaa26e2a3b7261eaa2bd6f4 Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
-Date: Mon, 27 Apr 2020 10:06:53 +0000
-Subject: [PATCH 1/7] inet: start dhcps always
+Date: Tue, 6 Oct 2020 07:51:54 +0000
+Subject: [PATCH 1/6] inet: start dhcps always
 
 This patch enables the dhcp server by default. 3rd party platforms
 (for instance RDK-based) need this, as the dhcp server is independent of
@@ -11,11 +11,11 @@ OpenSync there.
  1 file changed, 1 insertion(+), 3 deletions(-)
 
 diff --git a/src/lib/inet/src/inet_base.c b/src/lib/inet/src/inet_base.c
-index a93cefc..66387d7 100644
+index 565839e..e62f1fd 100644
 --- a/src/lib/inet/src/inet_base.c
 +++ b/src/lib/inet/src/inet_base.c
-@@ -412,7 +412,7 @@ bool inet_base_init(inet_base_t *self, const char *ifname)
-                                     inet_unit_s(INET_BASE_NETWORK,
+@@ -413,7 +413,7 @@ bool inet_base_init(inet_base_t *self, const char *ifname)
+                                     inet_unit(INET_BASE_NETWORK,
                                                  inet_unit_s(INET_BASE_SCHEME_NONE, NULL),
                                                  inet_unit(INET_BASE_SCHEME_STATIC,
 -                                                          inet_unit(INET_BASE_DHCP_SERVER, NULL),
@@ -23,7 +23,7 @@ index a93cefc..66387d7 100644
                                                            inet_unit(INET_BASE_DNS, NULL),
                                                            NULL),
                                                  inet_unit(INET_BASE_SCHEME_DHCP, NULL),
-@@ -1769,8 +1769,6 @@ bool inet_base_dhcp_server_commit(inet_base_t *self, bool start)
+@@ -1789,8 +1789,6 @@ bool inet_base_dhcp_server_commit(inet_base_t *self, bool start)
      if (self->in_dhcps != NULL) osn_dhcp_server_del(self->in_dhcps);
      self->in_dhcps = NULL;
  

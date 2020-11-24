@@ -1,7 +1,7 @@
-From 95eeb722cf3cfadaffb9635b3b7471c8978cbfe9 Mon Sep 17 00:00:00 2001
+From 4b9b8e8c3153eba83c4b5f38a309ab39e84d2e6d Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
 Date: Fri, 5 Jun 2020 09:48:17 +0000
-Subject: [PATCH 2/7] Use osync_hal in inet_gretap
+Subject: [PATCH 2/6] Use osync_hal in inet_gretap
 
 RDK platform abstracts GRE tunneling. Those platform also need parent
 interface mapping.
@@ -10,7 +10,7 @@ interface mapping.
  1 file changed, 15 insertions(+), 38 deletions(-)
 
 diff --git a/src/lib/inet/src/linux/inet_gretap.c b/src/lib/inet/src/linux/inet_gretap.c
-index 899608e..6c215d7 100644
+index ba99e7c..22648f5 100644
 --- a/src/lib/inet/src/linux/inet_gretap.c
 +++ b/src/lib/inet/src/linux/inet_gretap.c
 @@ -44,35 +44,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
