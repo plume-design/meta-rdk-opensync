@@ -8,7 +8,7 @@ inherit python3native
 
 FILESEXTRAPATHS_prepend := "${THISDIR}/files:"
 
-DEPENDS = "libev libgpg-error wireless-tools openssl jansson libtool mosquitto openvswitch protobuf-c dbus libpcap openvswitch-native hal-wifi halinterface mesh-agent python3-kconfiglib-native coreutils-native python3-jinja2-native python3-markupsafe-native"
+DEPENDS = "libev libgpg-error wireless-tools openssl jansson libtool mosquitto openvswitch protobuf-c dbus libpcap openvswitch-native hal-wifi halinterface mesh-agent python3-kconfiglib-native coreutils-native python3-jinja2-native python3-markupsafe-native libmxml"
 RDEPENDS_${PN} += "openvswitch"
 
 inherit python3native
@@ -17,15 +17,15 @@ SRCREV_core ?= "${AUTOREV}"
 SRCREV_platform ?= "${AUTOREV}"
 SRCREV_vendor ?= "${AUTOREV}"
 
-CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_2.2.4;name=core;destsuffix=git/core"
-CORE_URI += "file://0001-inet-start-dhcps-always.patch"
-CORE_URI += "file://0002-Use-osync_hal-in-inet_gretap.patch"
-CORE_URI += "file://0003-Fix-conflict-with-yocto-kernel-tools-kconfiglib.patch"
-CORE_URI += "file://0004-Remove-target_bsal_client_measure-from-core.patch"
-CORE_URI += "file://0005-Add-vlan-support.patch"
-CORE_URI += "file://0006-Fix-xing-events.patch"
+CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=ssh;branch=osync_2.4.1;name=core;destsuffix=git/core"
+CORE_URI += "file://0001-Fix-compilation-flags.patch"
+CORE_URI += "file://0002-Fix-missing-function-dhcp_option_name.patch"
+CORE_URI += "file://0003-Fix-compilation-OSN-route-config.patch"
+CORE_URI += "file://0004-Initialize-DHCP-client-null-impl-fields.patch"
+CORE_URI += "file://0005-Remove-target_bsal_client_measure-from-core.patch"
+CORE_URI += "file://0006-Fix-conflict-with-yocto-kernel-tools-kconfiglib.patch"
 
-PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_2.2.4;name=platform;destsuffix=git/platform/rdk"
+PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_2.4.1;name=platform;destsuffix=git/platform/rdk"
 SERVICE_PROVIDER_URI ?= ""
 VENDOR_URI ?= ""
 
@@ -71,12 +71,11 @@ FILES_${PN} = " \
 FILES_${PN}-dbg = " \
     ${prefix}/src/debug \
     ${prefix}/${PN}/**/.debug \
+    ${prefix}/opensync/**/**/.debug \
 "
 
 FILES_${PN}-dev = " \
     ${prefix}/${PN}/tools/wifi_hal_test \
-    ${prefix}/${PN}/tools/bs_cmd \
-    ${prefix}/${PN}/tools/bs_testd \
     ${prefix}/${PN}/tools/band_steering_test \
 "
 

@@ -1,0 +1,27 @@
+From a4faae6fac32cfb79dcd7c5396a74b57b7f1e515 Mon Sep 17 00:00:00 2001
+From: Cyprian Lech <clech@plume.com>
+Date: Thu, 8 Apr 2021 07:42:14 +0000
+Subject: [PATCH 3/6] Fix compilation OSN route config
+
+lnx_route_config is needed for the compilation of OpenSync. It will not
+break working of RDK platform when Wifi_Route_Config is empty.
+---
+ src/lib/osn/unit.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/lib/osn/unit.mk b/src/lib/osn/unit.mk
+index 1d3aa3b..3c8807f 100644
+--- a/src/lib/osn/unit.mk
++++ b/src/lib/osn/unit.mk
+@@ -101,7 +101,7 @@ UNIT_SRC += $(if $(CONFIG_OSN_LINUX_IPV6),src/linux/lnx_ip6.c)
+ UNIT_SRC += $(if $(CONFIG_OSN_LINUX_NETIF),src/linux/lnx_netif.c)
+ UNIT_SRC += $(if $(CONFIG_OSN_LINUX_NETLINK),src/linux/lnx_netlink.c)
+ UNIT_SRC += $(if $(CONFIG_OSN_LINUX_ROUTE),src/linux/lnx_route.c)
+-UNIT_SRC += $(if $(CONFIG_OSN_LINUX_ROUTE),src/linux/lnx_route_config.c)
++UNIT_SRC += src/linux/lnx_route_config.c
+ UNIT_SRC += $(if $(CONFIG_OSN_MINIUPNPD),src/linux/mupnp_server.c)
+ UNIT_SRC += $(if $(CONFIG_OSN_MINIUPNPD),src/linux/mupnp_cfg_iptv.c)
+ UNIT_SRC += $(if $(CONFIG_OSN_MINIUPNPD),src/linux/mupnp_cfg_wan.c)
+-- 
+1.9.1
+

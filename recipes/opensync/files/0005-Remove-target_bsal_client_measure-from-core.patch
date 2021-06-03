@@ -1,15 +1,15 @@
-From 35f323b5fc403a312e3b12f274d8f54924bdd611 Mon Sep 17 00:00:00 2001
+From 19bb80b9cffb3e536f31d4091ce99c91f3dd3974 Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
 Date: Fri, 23 Oct 2020 12:11:34 +0000
-Subject: [PATCH 4/6] Remove target_bsal_client_measure from core
+Subject: [PATCH 5/6] Remove target_bsal_client_measure from core
 
 RSSI events are not needed as while any kick is queued then if RSSI will
 change in time of kick, another XING event should be achieved that will
 reset any other kicks.
 ---
- src/bm/src/bm_kick.c             | 39 +++++++++-----------------------
- src/lib/target/inc/target_bsal.h | 20 ----------------
- src/lib/target/src/target_stub.c | 11 ---------
+ src/bm/src/bm_kick.c             | 39 +++++++++++----------------------------
+ src/lib/target/inc/target_bsal.h | 20 --------------------
+ src/lib/target/src/target_stub.c | 11 -----------
  3 files changed, 11 insertions(+), 59 deletions(-)
 
 diff --git a/src/bm/src/bm_kick.c b/src/bm/src/bm_kick.c
@@ -119,14 +119,13 @@ index 95ac971..ce85799 100644
      evsched_task(bm_kick_task_kick, kick, EVSCHED_ASAP);
      return;
 diff --git a/src/lib/target/inc/target_bsal.h b/src/lib/target/inc/target_bsal.h
-index 7d58d41..da7daa0 100644
+index a7abb52..448bdad 100644
 --- a/src/lib/target/inc/target_bsal.h
 +++ b/src/lib/target/inc/target_bsal.h
-@@ -432,26 +432,6 @@ int target_bsal_client_update(const char *ifname,
- int target_bsal_client_remove(const char *ifname,
+@@ -438,26 +438,6 @@ int target_bsal_client_remove(const char *ifname,
                                const uint8_t *mac_addr);
  
--/**
+ /**
 - * @brief Requests target to schedule signal strength measurement
 - *
 - * The target is expected to generate BSAL_EVENT_RSSI
@@ -146,14 +145,15 @@ index 7d58d41..da7daa0 100644
 -                               const uint8_t *mac_addr,
 -                               int num_samples);
 -
- /**
+-/**
   * @brief Requests target to disconnect a client
   * @note target_bsal_client_add() will be called sometime earlier first
+  * @param ifname Wireless interface name the client is connected on
 diff --git a/src/lib/target/src/target_stub.c b/src/lib/target/src/target_stub.c
-index 34a0dca..152a7df 100644
+index 3ad902e..b638c9d 100644
 --- a/src/lib/target/src/target_stub.c
 +++ b/src/lib/target/src/target_stub.c
-@@ -584,17 +584,6 @@ int target_bsal_client_remove(const char *ifname, const uint8_t *mac_addr)
+@@ -587,17 +587,6 @@ int target_bsal_client_remove(const char *ifname, const uint8_t *mac_addr)
  }
  #endif
  
@@ -172,5 +172,5 @@ index 34a0dca..152a7df 100644
  int target_bsal_client_disconnect(const char *ifname, const uint8_t *mac_addr,
                                    bsal_disc_type_t type, uint8_t reason)
 -- 
-2.25.1
+1.9.1
 

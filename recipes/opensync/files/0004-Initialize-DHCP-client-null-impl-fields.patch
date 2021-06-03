@@ -1,0 +1,34 @@
+From c7e71d3c075a60ce143a3332a9fc9b01bad6ad75 Mon Sep 17 00:00:00 2001
+From: Cyprian Lech <clech@plume.com>
+Date: Thu, 8 Apr 2021 08:18:58 +0000
+Subject: [PATCH 4/6] Initialize DHCP client null impl fields
+
+---
+ src/lib/osn/src/osn_dhcp_client_null.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/lib/osn/src/osn_dhcp_client_null.c b/src/lib/osn/src/osn_dhcp_client_null.c
+index 9cdecf0..3e1876f 100644
+--- a/src/lib/osn/src/osn_dhcp_client_null.c
++++ b/src/lib/osn/src/osn_dhcp_client_null.c
+@@ -81,7 +81,7 @@ bool osn_dhcp_client_opt_get(osn_dhcp_client_t *self, enum osn_dhcp_option opt,
+     (void)self;
+     (void)opt;
+     (void)request;
+-    (void)value;
++     *value = NULL;
+ 
+     return true;
+ }
+@@ -97,7 +97,7 @@ bool osn_dhcp_client_vendorclass_set(osn_dhcp_client_t *self, const char *vendor
+ bool osn_dhcp_client_state_get(osn_dhcp_client_t *self, bool *enabled)
+ {
+     (void)self;
+-    (void)enabled;
++    *enabled = false;
+ 
+     return true;
+ }
+-- 
+1.9.1
+
