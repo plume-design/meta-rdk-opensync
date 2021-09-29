@@ -1,7 +1,7 @@
-From 952ae27615e310899ce049059119fac649d72597 Mon Sep 17 00:00:00 2001
+From b12e30e30ab98cadd19db8b3a3ebe14476bfd30e Mon Sep 17 00:00:00 2001
 From: Mateusz Bajorski <mbajorski@plume.com>
 Date: Mon, 2 Mar 2020 14:24:20 +0100
-Subject: [PATCH 3/6] Fix conflict with yocto-kernel-tools kconfiglib
+Subject: [PATCH 3/7] Fix conflict with yocto-kernel-tools kconfiglib
 
 ---
  build/kconfig.mk | 4 ++--

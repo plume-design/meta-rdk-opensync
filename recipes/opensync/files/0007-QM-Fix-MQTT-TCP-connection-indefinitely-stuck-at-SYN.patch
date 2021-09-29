@@ -1,0 +1,53 @@
+From 6ba95cc6eae39f512973cdeaf480bfa1ddfe24fa Mon Sep 17 00:00:00 2001
+From: Cyprian Lech <clech@plume.com>
+Date: Wed, 15 Sep 2021 11:03:49 +0000
+Subject: [PATCH 7/7] QM: Fix MQTT TCP connection indefinitely stuck at
+ SYN_SENT
+
+If mosquitto_connect() timeouts on SYN_SENT waiting for SYN_ACK (for
+instance if first trying an inoperable IPv6), which is after 2 minutes,
+QM would try to do a reconnect immediately and break the connection,
+which has just fallen back from IPv6 to IPv4, and in addition
+accidentally reinit libmosquitto, thus again causing a re-try of the
+first address (IPv6) on the resolve list, which was already failing
+before. The result is unsuccessfully re-trying inoperable IPv6 again
+and again, instead of falling back to IPv4.
+
+This fix will (if TCP connection has been established, in this case
+after finally falling back from IPv6 to IPv4, but MQTT session is still
+connecting / setting up) give time for the MQTT CONNECT and CONNACK
+messages to be exchanged, and for libmosquitto to call the connect
+callback, successfully marking the connection as established.
+---
+ src/qm/src/qm_mqtt.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/src/qm/src/qm_mqtt.c b/src/qm/src/qm_mqtt.c
+index 3b95974..d9e871f 100644
+--- a/src/qm/src/qm_mqtt.c
++++ b/src/qm/src/qm_mqtt.c
+@@ -383,6 +383,7 @@ void qm_mqtt_publish_queue()
+ void qm_mqtt_reconnect()
+ {
+     mosqev_t *mqtt = &qm_mqtt;
++    bool result;
+ 
+     /*
+      * Reconnect handler
+@@ -393,10 +394,10 @@ void qm_mqtt_reconnect()
+         {
+             if (qm_mqtt_reconnect_ts < ticks())
+             {
+-                qm_mqtt_reconnect_ts = ticks() + TICKS_S(STATS_MQTT_RECONNECT);
+-
+                 LOG(DEBUG, "Connecting to %s ...\n", qm_mqtt_broker);
+-                if (!mosqev_connect(&qm_mqtt, qm_mqtt_broker, qm_mqtt_port))
++                result = mosqev_connect(&qm_mqtt, qm_mqtt_broker, qm_mqtt_port);
++                qm_mqtt_reconnect_ts = ticks() + TICKS_S(STATS_MQTT_RECONNECT);
++                if (!result)
+                 {
+                     LOGE("Connecting.\n");
+                     return;
+-- 
+2.25.1
+

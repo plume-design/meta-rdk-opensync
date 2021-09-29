@@ -2,7 +2,7 @@ SUMMARY = "OpenSync"
 LICENSE = "BSD-3-Clause"
 LIC_FILES_CHKSUM = "file://LICENSE;md5=df3f42ef5870da613e959ac4ecaa1cb8"
 
-PR = "r0"
+PR = "r1"
 
 inherit python3native
 
@@ -24,6 +24,7 @@ CORE_URI += "file://0003-Fix-conflict-with-yocto-kernel-tools-kconfiglib.patch"
 CORE_URI += "file://0004-Remove-target_bsal_client_measure-from-core.patch"
 CORE_URI += "file://0005-Add-vlan-support.patch"
 CORE_URI += "file://0006-Fix-xing-events.patch"
+CORE_URI += "file://0007-QM-Fix-MQTT-TCP-connection-indefinitely-stuck-at-SYN.patch"
 
 PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=ssh;branch=osync_2.2.4;name=platform;destsuffix=git/platform/rdk"
 SERVICE_PROVIDER_URI ?= ""

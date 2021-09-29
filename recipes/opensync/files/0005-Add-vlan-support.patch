@@ -1,7 +1,7 @@
-From fd84ad1328d032f7087ccb002329209cbf968531 Mon Sep 17 00:00:00 2001
+From c9d885bbeb682b111641075c2a071c86448f06e0 Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
 Date: Mon, 26 Oct 2020 12:37:08 +0000
-Subject: [PATCH 5/6] Add vlan support
+Subject: [PATCH 5/7] Add vlan support
 
 ---
  src/nm2/inc/nm2_iface.h       | 2 ++

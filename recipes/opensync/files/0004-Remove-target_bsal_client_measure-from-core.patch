@@ -1,7 +1,7 @@
-From 35f323b5fc403a312e3b12f274d8f54924bdd611 Mon Sep 17 00:00:00 2001
+From 3330880712fea43d14c05a83fe5615fe8fe7bde1 Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
 Date: Fri, 23 Oct 2020 12:11:34 +0000
-Subject: [PATCH 4/6] Remove target_bsal_client_measure from core
+Subject: [PATCH 4/7] Remove target_bsal_client_measure from core
 
 RSSI events are not needed as while any kick is queued then if RSSI will
 change in time of kick, another XING event should be achieved that will

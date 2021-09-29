@@ -1,7 +1,7 @@
-From 49c06b355320c72b7f9c2cb8c83ffde5a6d753ed Mon Sep 17 00:00:00 2001
+From 343be69d554e36be553b7e3d4064fad42227a0ab Mon Sep 17 00:00:00 2001
 From: Cyprian Lech <clech@plume.com>
 Date: Mon, 26 Oct 2020 12:38:14 +0000
-Subject: [PATCH 6/6] Fix xing events
+Subject: [PATCH 6/7] Fix xing events
 
 ---
  src/bm/src/bm_events.c | 2 --
