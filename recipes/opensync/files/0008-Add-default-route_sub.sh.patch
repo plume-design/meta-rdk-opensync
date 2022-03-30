@@ -1,0 +1,23 @@
+From 2077588d4a6cf4873e9ae86aa98f54a7eaa77dbb Mon Sep 17 00:00:00 2001
+From: Cyprian Lech <clech@plume.com>
+Date: Mon, 29 Nov 2021 12:00:20 +0000
+Subject: Add default route_sub.sh
+
+The script was not available for the GWs by default. It was leading to the
+errors while executing by NM. This patch adds the default implementation
+of route_sub.sh. It allows to overwrite the script by defining it's own
+version by some additional layer in the rootfs.
+
+Signed-off-by: Cyprian Lech <clech@plume.com>
+---
+ .../INSTALL_PREFIX/bin/route_sub.sh.jinja                         | 0
+ 1 file changed, 0 insertions(+), 0 deletions(-)
+ rename rootfs/kconfig/{TARGET_CAP_EXTENDER => OSN_LINUX_ENABLED}/INSTALL_PREFIX/bin/route_sub.sh.jinja (100%)
+
+diff --git a/rootfs/kconfig/TARGET_CAP_EXTENDER/INSTALL_PREFIX/bin/route_sub.sh.jinja b/rootfs/kconfig/OSN_LINUX_ENABLED/INSTALL_PREFIX/bin/route_sub.sh.jinja
+similarity index 100%
+rename from rootfs/kconfig/TARGET_CAP_EXTENDER/INSTALL_PREFIX/bin/route_sub.sh.jinja
+rename to rootfs/kconfig/OSN_LINUX_ENABLED/INSTALL_PREFIX/bin/route_sub.sh.jinja
+-- 
+2.25.1
+

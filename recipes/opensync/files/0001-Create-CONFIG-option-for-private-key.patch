@@ -1,0 +1,56 @@
+From 86d494f9a785a19fc0483af23a6c4910f79d8da6 Mon Sep 17 00:00:00 2001
+From: Michal Kowalczyk <mkowalczyk@plume.com>
+Date: Fri, 19 Nov 2021 10:26:45 +0100
+Subject: [PATCH] Create CONFIG option for private key
+
+Some vendors (e.g. RDK-based) use custom name for the private key file.
+Because the filename is known on compile-time it's convienient to use a
+CONFIG option to provide it instead of forcing a function override in
+vendor layer. On the other hand we still keep the target_ function in
+case the filename needs to be generated in the runtime. Only in that
+case (runtime genertion) the vendor would need to create an override
+in vendor layer.
+
+The /var/cert/client_dec.key used as a default one is what's currently
+present in vendor/plume layer, so this change should be transparent.
+
+Signed-off-by: Michal Kowalczyk <mkowalczyk@plume.com>
+---
+ src/lib/target/kconfig/Kconfig   | 7 +++++++
+ src/lib/target/src/target_stub.c | 2 +-
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/src/lib/target/kconfig/Kconfig b/src/lib/target/kconfig/Kconfig
+index c08c23c5b..59e8eb8c3 100644
+--- a/src/lib/target/kconfig/Kconfig
++++ b/src/lib/target/kconfig/Kconfig
+@@ -60,6 +60,13 @@ menu "Target paths"
+         default "/opt/tb/cm-disable-fatal"
+         help
+             This file inhibits the manager restart action -- use for testing only.
++
++    config TARGET_PATH_PRIVKEY
++        string "Path to private key used to authenticate with cloud"
++        default "/var/certs/client_dec.key"
++        help
++            Full file path to private key used to authenticate with cloud.
++
+ endmenu
+ 
+ menuconfig TARGET_ETH_LIST
+diff --git a/src/lib/target/src/target_stub.c b/src/lib/target/src/target_stub.c
+index b8e5a3ee9..07e3a102c 100644
+--- a/src/lib/target/src/target_stub.c
++++ b/src/lib/target/src/target_stub.c
+@@ -94,7 +94,7 @@ const char *target_tls_mycert_filename(void)
+ const char *target_tls_privkey_filename(void)
+ {
+     // Return path/filename to MY Private Key used to authenticate with cloud
+-    return TARGET_CERT_PATH "/client_dec.key";
++    return CONFIG_TARGET_PATH_PRIVKEY;
+ }
+ #endif
+ 
+-- 
+2.25.1
+

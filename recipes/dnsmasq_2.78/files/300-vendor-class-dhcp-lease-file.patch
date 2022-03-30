@@ -1,0 +1,115 @@
+Index: dnsmasq-2.78/src/dnsmasq.h
+===================================================================
+--- dnsmasq-2.78.orig/src/dnsmasq.h	2020-08-27 08:09:28.163031878 +0000
++++ dnsmasq-2.78/src/dnsmasq.h	2020-08-27 08:18:57.395513710 +0000
+@@ -691,6 +691,7 @@
+   char *hostname, *fqdn; /* name from client-hostname option or config */
+   char *old_hostname;    /* hostname before it moved to another lease */
+   char *fingerprint;     /* DHCP fingerprint                         */
++  char *vendor_class;    /* DHCP vendor class                        */
+   int flags;
+   time_t expires;        /* lease expiry */
+ #ifdef HAVE_BROKEN_RTC
+Index: dnsmasq-2.78/src/lease.c
+===================================================================
+--- dnsmasq-2.78.orig/src/lease.c	2020-08-27 08:09:27.626369162 +0000
++++ dnsmasq-2.78/src/lease.c	2020-08-27 08:23:50.583362197 +0000
+@@ -30,6 +30,7 @@
+   int items;
+   char *domain = NULL;
+   char *dhcp_fingerprint = NULL;
++  char vendor_buf[256];
+ 
+   *daemon->dhcp_buff3 = *daemon->dhcp_buff2 = '\0';
+ 
+@@ -71,8 +72,8 @@
+ 	  }
+ #endif
+ 	
+-	if (fscanf(leasestream, " %64s %255s %255s %764s",
+-		   daemon->namebuff, daemon->dhcp_buff, dhcp_fingerprint, daemon->packet) != 4)
++    if (fscanf(leasestream, " %64s %255s %255s \"%255[^\"]\" %764s",
++           daemon->namebuff, daemon->dhcp_buff, dhcp_fingerprint, vendor_buf, daemon->packet) != 5)
+         {
+             if (NULL != dhcp_fingerprint)
+                 free(dhcp_fingerprint);
+@@ -130,6 +131,9 @@
+         if (strcmp(dhcp_fingerprint, "*") != 0)
+           lease->fingerprint = strdup(dhcp_fingerprint);
+ 
++        if (strcmp(vendor_buf, "*") != 0)
++            lease->vendor_class = strdup(vendor_buf);
++
+ 	ei = atol(daemon->dhcp_buff3);
+ 
+ #ifdef HAVE_BROKEN_RTC
+@@ -331,6 +335,8 @@
+             send_lease_notify(&leaseMsg);
+           }
+           ourprintf(&err, "%s ", lease->fingerprint ? lease->fingerprint : "*");
++          // Here we use double quotes since vendor-class can contain spaces
++          ourprintf(&err, "\"%s\" ", lease->vendor_class ? lease->vendor_class : "*");
+ 	  	  
+ 	  if (lease->clid && lease->clid_len != 0)
+ 	    {
+@@ -612,6 +618,12 @@
+              free(lease->fingerprint);
+               lease->fingerprint = NULL;
+             }
++
++          if (lease->vendor_class)
++            {
++              free(lease->vendor_class);
++              lease->vendor_class = NULL;
++            }
+ 	  
+  	  *up = lease->next; /* unlink */
+ 	  
+@@ -1297,4 +1309,29 @@
+   }
+ }
+ 
++void lease_add_vendor_class(struct dhcp_lease *lease, unsigned char *data, unsigned int len)
++{
++  unsigned int i;
++
++  if (lease->vendor_class != NULL)
++  {
++    free(lease->vendor_class);
++    lease->vendor_class = NULL;
++  }
++
++  if (len > 0)
++  {
++    lease->vendor_class = whine_malloc(len + 1);
++    memcpy(lease->vendor_class, data, len);
++    lease->vendor_class[len]    = '\0';
++
++    // Escape quotes (") and 0 in vendor-class by replacing them with space just to be safe
++    for (i = 0; i < len; i++)
++    {
++        if (lease->vendor_class[i] == '\"' || lease->vendor_class[i] == '\0')
++            lease->vendor_class[i] = ' ';
++    }
++  }
++}
++
+ #endif
+Index: dnsmasq-2.78/src/rfc2131.c
+===================================================================
+--- dnsmasq-2.78.orig/src/rfc2131.c	2020-08-27 08:09:28.163031878 +0000
++++ dnsmasq-2.78/src/rfc2131.c	2020-08-27 08:25:57.802429385 +0000
+@@ -1404,6 +1404,13 @@
+ 		}
+ 	    }
+ 	}
++
++      /* get vendor-class information           */
++      if (lease && (opt = option_find(mess, sz, OPTION_VENDOR_ID, 1)))
++    {
++      lease_add_vendor_class(lease, option_ptr(opt, 0), option_len(opt));
++    }
++
+       /* get options information                */
+       if (lease)
+         {
