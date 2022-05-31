@@ -23,7 +23,7 @@ SRCREV_vendor ?= "${AUTOREV}"
 
 OPENSYNC_CORE_REPO_PATH ?= "git://git@github.com/plume-design/opensync.git"
 OPENSYNC_CORE_REPO_PROTOCOL ?= "ssh"
-OPENSYNC_CORE_BRANCH ?= "osync_3.2.5"
+OPENSYNC_CORE_BRANCH ?= "osync_3.2.7"
 
 OPENSYNC_CORE_URI ?= "${OPENSYNC_CORE_REPO_PATH};protocol=${OPENSYNC_CORE_REPO_PROTOCOL};branch=${OPENSYNC_CORE_BRANCH};name=core;destsuffix=git/core"
 OPENSYNC_CORE_URI += "file://0002-Fix-missing-function-dhcp_option_name.patch"
@@ -36,13 +36,13 @@ OPENSYNC_CORE_URI += "file://0009-add-journal-logger.patch"
 
 OPENSYNC_PLATFORM_REPO_PATH ?= "git://git@github.com/plume-design/opensync-platform-rdk.git"
 OPENSYNC_PLATFORM_REPO_PROTOCOL ?= "ssh"
-OPENSYNC_PLATFORM_BRANCH ?= "osync_3.2.5"
+OPENSYNC_PLATFORM_BRANCH ?= "osync_3.2.7"
 
 OPENSYNC_PLATFORM_URI ?= "${OPENSYNC_PLATFORM_REPO_PATH};protocol=${OPENSYNC_PLATFORM_REPO_PROTOCOL};branch=${OPENSYNC_PLATFORM_BRANCH};name=platform;destsuffix=git/platform/rdk"
 
 OPENSYNC_VENDOR_REPO_PATH ?= "git://git@github.com/plume-design/opensync-vendor-rdk-template.git"
 OPENSYNC_VENDOR_REPO_PROTOCOL ?= "ssh"
-OPENSYNC_VENDOR_BRANCH ?= "osync_3.2.5"
+OPENSYNC_VENDOR_BRANCH ?= "osync_3.2.7"
 OPENSYNC_VENDOR_SUFFIX ?= "turris"
 
 OPENSYNC_VENDOR_URI ?="${OPENSYNC_VENDOR_REPO_PATH};protocol=${OPENSYNC_VENDOR_REPO_PROTOCOL};branch=${OPENSYNC_VENDOR_BRANCH};name=vendor;destsuffix=git/vendor/${OPENSYNC_VENDOR_SUFFIX}"
