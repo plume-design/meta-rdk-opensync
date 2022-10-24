@@ -17,7 +17,7 @@ SRCREV_core ?= "${AUTOREV}"
 SRCREV_platform ?= "${AUTOREV}"
 SRCREV_vendor ?= "${AUTOREV}"
 
-CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=https;branch=osync_2.4.5;name=core;destsuffix=git/core"
+CORE_URI ?= "git://git@github.com/plume-design/opensync.git;protocol=https;branch=osync_2.4.5.1;name=core;destsuffix=git/core"
 CORE_URI += "file://0002-Fix-missing-function-dhcp_option_name.patch"
 CORE_URI += "file://0004-Initialize-DHCP-client-null-impl-fields.patch"
 CORE_URI += "file://0005-Remove-target_bsal_client_measure-from-core.patch"
