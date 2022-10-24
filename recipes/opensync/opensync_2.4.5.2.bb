@@ -23,7 +23,7 @@ CORE_URI += "file://0004-Initialize-DHCP-client-null-impl-fields.patch"
 CORE_URI += "file://0005-Remove-target_bsal_client_measure-from-core.patch"
 CORE_URI += "file://0006-Fix-conflict-with-yocto-kernel-tools-kconfiglib.patch"
 
-PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=https;branch=osync_2.4.5;name=platform;destsuffix=git/platform/rdk"
+PLATFORM_URI ?= "git://git@github.com/plume-design/opensync-platform-rdk.git;protocol=https;branch=osync_2.4.5.2;name=platform;destsuffix=git/platform/rdk"
 SERVICE_PROVIDER_URI ?= ""
 VENDOR_URI ?= ""
 
