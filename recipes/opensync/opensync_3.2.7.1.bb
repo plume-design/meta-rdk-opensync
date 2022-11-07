@@ -36,7 +36,7 @@ OPENSYNC_CORE_URI += "file://0009-add-journal-logger.patch"
 
 OPENSYNC_PLATFORM_REPO_PATH ?= "git://git@github.com/plume-design/opensync-platform-rdk.git"
 OPENSYNC_PLATFORM_REPO_PROTOCOL ?= "https"
-OPENSYNC_PLATFORM_BRANCH ?= "osync_3.2.7"
+OPENSYNC_PLATFORM_BRANCH ?= "osync_3.2.7.1"
 
 OPENSYNC_PLATFORM_URI ?= "${OPENSYNC_PLATFORM_REPO_PATH};protocol=${OPENSYNC_PLATFORM_REPO_PROTOCOL};branch=${OPENSYNC_PLATFORM_BRANCH};name=platform;destsuffix=git/platform/rdk"
 
