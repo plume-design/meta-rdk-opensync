@@ -1,0 +1,717 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -57,6 +57,18 @@ if test x"$xtinyproxy_enabled" = x"yes";
+     AC_DEFINE(XTINYPROXY_ENABLE)
+ fi
+ 
++dnl Check to see if the XTinyproxymac header is to be included
++AH_TEMPLATE([XTINYPROXYMAC_ENABLE],
++	    [Define if you want to have the peer's mac address included in a XTinyproxymac header sent to the server.])
++TP_ARG_ENABLE(xtinyproxymac,
++              [Include the X-Tinyproxy-MAC header (default is YES)],
++              yes)
++
++if test x"$xtinyproxymac_enabled" = x"yes"; then
++    AC_DEFINE(XTINYPROXYMAC_ENABLE)
++fi
++
++
+ dnl Include filtering for domain/URLs
+ AH_TEMPLATE([FILTER_ENABLE],
+ 	    [Defined if you would like filtering code included.])
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -42,6 +42,7 @@ tinyproxy_SOURCES = \
+ 	sock.c sock.h \
+ 	stats.c stats.h \
+ 	text.c text.h \
++    nf_util_neigh.c nf_util_neigh.h \
+ 	main.c main.h \
+ 	utils.c utils.h \
+ 	upstream.c upstream.h \
+@@ -58,7 +59,7 @@ EXTRA_tinyproxy_SOURCES = filter.c filte
+ 	reverse-proxy.c reverse-proxy.h \
+ 	transparent-proxy.c transparent-proxy.h
+ tinyproxy_DEPENDENCIES = @ADDITIONAL_OBJECTS@
+-tinyproxy_LDADD = @ADDITIONAL_OBJECTS@ -lpthread
++tinyproxy_LDADD = @ADDITIONAL_OBJECTS@ -lpthread -lmnl
+ 
+ if HAVE_GPERF
+ conf-tokens.c: conf-tokens-gperf.inc
+--- a/src/conf.c
++++ b/src/conf.c
+@@ -153,6 +153,7 @@ static HANDLE_FUNC (handle_user);
+ static HANDLE_FUNC (handle_viaproxyname);
+ static HANDLE_FUNC (handle_disableviaheader);
+ static HANDLE_FUNC (handle_xtinyproxy);
++static HANDLE_FUNC (handle_xtinyproxymac);
+ 
+ #ifdef UPSTREAM_SUPPORT
+ static HANDLE_FUNC (handle_upstream);
+@@ -193,6 +194,7 @@ struct {
+         STDCONF (statfile, STR, handle_statfile),
+         STDCONF (stathost, STR, handle_stathost),
+         STDCONF (xtinyproxy,  BOOL, handle_xtinyproxy),
++        STDCONF (xtinyproxy_mac,  BOOL, handle_xtinyproxymac),
+         /* boolean arguments */
+         STDCONF (syslog, BOOL, handle_syslog),
+         STDCONF (bindsame, BOOL, handle_bindsame),
+@@ -707,6 +709,18 @@ static HANDLE_FUNC (handle_xtinyproxy)
+ #endif
+ }
+ 
++static HANDLE_FUNC (handle_xtinyproxymac)
++{
++#ifdef XTINYPROXYMAC_ENABLE
++        return set_bool_arg (&conf->add_xtinyproxymac, line, &match[2]);
++#else
++        fprintf (stderr,
++                 "XTinyproxy-MAC NOT Enabled! Recompile with --enable-xtinyproxymac\n");
++        return 1;
++#endif
++}
++
++
+ static HANDLE_FUNC (handle_syslog)
+ {
+         return set_bool_arg (&conf->syslog, line, &match[2]);
+--- a/src/conf.h
++++ b/src/conf.h
+@@ -57,6 +57,10 @@ struct config_s {
+ #ifdef XTINYPROXY_ENABLE
+         unsigned int add_xtinyproxy; /* boolean */
+ #endif
++#ifdef XTINYPROXYMAC_ENABLE
++        unsigned int add_xtinyproxymac; /* boolean */
++#endif
++
+ #ifdef REVERSE_SUPPORT
+         struct reversepath *reversepath_list;
+         unsigned int reverseonly;       /* boolean */
+--- a/src/conns.c
++++ b/src/conns.c
+@@ -29,6 +29,7 @@
+ #include "heap.h"
+ #include "log.h"
+ #include "stats.h"
++#include "nf_util_neigh.h"
+ 
+ void conn_struct_init(struct conn_s *connptr) {
+         connptr->error_number = -1;
+@@ -42,6 +43,7 @@ int conn_init_contents (struct conn_s *c
+                                 const char *sock_ipaddr)
+ {
+         struct buffer_s *cbuffer, *sbuffer;
++        char mac[MAX_MAC_STR_SIZE] = {0};
+ 
+         assert (connptr->client_fd >= 0);
+ 
+@@ -61,6 +63,12 @@ int conn_init_contents (struct conn_s *c
+                                    safestrdup (sock_ipaddr) : NULL);
+         connptr->client_ip_addr = safestrdup (ipaddr);
+ 
++        if (!nf_neigh_get_mac(ipaddr, mac)) {
++                log_message(LOG_ERR, "Couldn't find mac for client ip[%s]", ipaddr);
++        }
++
++        connptr->client_mac_addr = safestrdup(mac);
++
+         update_stats (STAT_OPEN);
+ 
+         return 1;
+@@ -118,6 +126,8 @@ void conn_destroy_contents (struct conn_
+                 safefree (connptr->server_ip_addr);
+         if (connptr->client_ip_addr)
+                 safefree (connptr->client_ip_addr);
++        if (connptr->client_mac_addr)
++                safefree (connptr->client_mac_addr);
+ 
+ #ifdef REVERSE_SUPPORT
+         if (connptr->reversepath)
+--- a/src/conns.h
++++ b/src/conns.h
+@@ -67,6 +67,11 @@ struct conn_s {
+         char *client_ip_addr;
+ 
+         /*
++         * Store the client's MAC information
++         */
++        char *client_mac_addr;
++
++        /*
+          * Store the incoming request's HTTP protocol.
+          */
+         struct {
+--- a/src/html-error.c
++++ b/src/html-error.c
+@@ -255,6 +255,7 @@ int add_standard_vars (struct conn_s *co
+         ADD_VAR_RET ("cause", connptr->error_string);
+         ADD_VAR_RET ("request", connptr->request_line);
+         ADD_VAR_RET ("clientip", connptr->client_ip_addr);
++        ADD_VAR_RET ("clientmac", connptr->client_mac_addr);
+ 
+         /* The following value parts are all non-NULL and will
+          * trigger warnings in ADD_VAR_RET(), so we use
+--- a/src/main.c
++++ b/src/main.c
+@@ -44,6 +44,7 @@
+ #include "sock.h"
+ #include "stats.h"
+ #include "utils.h"
++#include "nf_util_neigh.h"
+ 
+ /*
+  * Global Structures
+@@ -290,7 +291,8 @@ int
+ main (int argc, char **argv)
+ {
+         int opt, daemonized = TRUE;
+-
++        pthread_attr_t *attrp, attr;
++        struct nf_neigh_context *ctxt;
+         srand(time(NULL)); /* for hashmap seeds */
+ 
+         /* Only allow u+rw bits. This may be required for some versions
+@@ -361,6 +363,22 @@ main (int argc, char **argv)
+                 filter_init ();
+ #endif /* FILTER_ENABLE */
+ 
++#ifdef XTINYPROXYMAC_ENABLE
++        nf_neigh_init ();
++        if (config->add_xtinyproxymac)
++        {
++                ctxt = nf_neigh_get_context ();
++                attrp = 0;
++                if (pthread_attr_init (&attr) == 0) {
++                    attrp = &attr;
++                    pthread_attr_setstacksize (attrp, 256*1024);
++                }
++
++                if (pthread_create (&ctxt->neigh_thread, attrp, neigh_main_loop, ctxt) != 0) {
++                    log_message (LOG_ERR, "Couldn't start listening on neigh updates.");
++                }
++        }
++#endif /* TINYPROXYMAC_ENABLE */
+         /* Start listening on the selected port. */
+         if (child_listening_sockets(config->listen_addrs, config->port) < 0) {
+                 fprintf (stderr, "%s: Could not create listening sockets.\n",
+--- /dev/null
++++ b/src/nf_util_neigh.c
+@@ -0,0 +1,400 @@
++/* This example is placed in the public domain. */
++#include <stdio.h>
++#include <stdarg.h>
++#include <stdlib.h>
++#include <string.h>
++#include <time.h>
++#include <arpa/inet.h>
++#include <errno.h>
++#include <net/if.h>
++#include <libmnl/libmnl.h>
++#include <linux/if_link.h>
++#include <linux/rtnetlink.h>
++#include <sys/socket.h>
++#include <netdb.h>
++#include <pthread.h>
++
++#include "log.h"
++#include "orderedmap.h"
++#include "nf_util_neigh.h"
++
++#define ARP_BUCKETS 256
++
++struct nf_neigh_context g_ctxt;
++
++struct nf_neigh_context *nf_neigh_get_context(void)
++{
++    return &g_ctxt;
++}
++
++unsigned int nf_neigh_get_mac(const char *ip, char *mac)
++{
++    struct nf_neigh_context  *ctxt = nf_neigh_get_context();
++    char *pmac;
++
++    if (!ctxt) return 0;
++
++    pmac = orderedmap_find(ctxt->arptable, ip);
++    if (pmac)
++    {
++        if (snprintf(mac, MAX_MAC_STR_SIZE, "%s", pmac) > 0)
++            return 1;
++    }
++    return 0;
++}
++
++static int
++util_data_attr_cb(const struct nlattr *attr, void *data)
++{
++    const struct nlattr **tb = data;
++    int type = mnl_attr_get_type(attr);
++
++    /* skip unsupported attribute in user-space */
++    if (mnl_attr_type_valid(attr, IFA_MAX) < 0)
++        return MNL_CB_OK;
++
++    switch(type) {
++    case NDA_DST:
++        if (mnl_attr_validate(attr, MNL_TYPE_BINARY) < 0) {
++            perror("mnl_attr_validate");
++            return MNL_CB_ERROR;
++        }
++        break;
++    case NDA_LLADDR:
++        if (mnl_attr_validate(attr, MNL_TYPE_BINARY) < 0) {
++            perror("mnl_attr_validate");
++            return MNL_CB_ERROR;
++        }
++        break;
++    }
++    tb[type] = attr;
++    return MNL_CB_OK;
++}
++
++int neigh_add_to_map(struct nf_neigh_info *neigh_info)
++{
++    char ipstr[INET6_ADDRSTRLEN] = { 0 };
++    int rc = -1;
++    struct nf_neigh_context *ctxt;
++    macaddr_t *pmac = neigh_info->hwaddr;
++    char macstr[MAX_MAC_STR_SIZE];
++    ctxt = nf_neigh_get_context();
++
++    inet_ntop(neigh_info->af_family, neigh_info->ipaddr, ipstr, sizeof(ipstr));
++
++    pthread_mutex_lock(&ctxt->arptable_lock);
++    if (orderedmap_find(ctxt->arptable, ipstr)) {
++        orderedmap_remove(ctxt->arptable, ipstr);
++    }
++    snprintf(macstr, MAX_MAC_STR_SIZE, PRI_macaddr_t, FMT_macaddr_pt(pmac));
++    rc = orderedmap_append(ctxt->arptable, ipstr, macstr) ? 0 : -1;
++    pthread_mutex_unlock(&ctxt->arptable_lock);
++
++    return rc;
++}
++
++int neigh_del_from_map(struct nf_neigh_info *neigh_info)
++{
++    char ipstr[INET6_ADDRSTRLEN] = { 0 };
++    int rc = -1;
++    struct nf_neigh_context *ctxt;
++
++    ctxt = nf_neigh_get_context();
++    inet_ntop(neigh_info->af_family, neigh_info->ipaddr, ipstr, sizeof(ipstr));
++
++    pthread_mutex_lock(&ctxt->arptable_lock);
++    rc = orderedmap_remove(ctxt->arptable, ipstr) ? 0 : -1;
++    pthread_mutex_unlock(&ctxt->arptable_lock);
++
++    return rc;
++}
++
++static void process_neigh_event(struct nf_neigh_info *neigh_info)
++{
++    char ipstr[INET6_ADDRSTRLEN] = { 0 };
++    macaddr_t mac = { { 0 } };
++    macaddr_t *pmac;
++    unsigned int rc;
++
++    pmac = (macaddr_t *)((neigh_info->hwaddr != NULL) ? neigh_info->hwaddr : &mac);
++    inet_ntop(neigh_info->af_family, neigh_info->ipaddr, ipstr, sizeof(ipstr));
++    log_message(LOG_INFO, "Entry with mac "  PRI_macaddr_t
++                           " for ip[%s]: %s",
++                           FMT_macaddr_pt(pmac), ipstr,
++                           (neigh_info->add && !neigh_info->del) ? "added" : "deleted");
++
++    if (neigh_info->add)
++    {
++        rc = neigh_add_to_map(neigh_info);
++        if (rc != 0)
++        {
++            log_message(LOG_ERR, "add to cache failed");
++            return;
++        }
++    }
++    else if (neigh_info->del)
++    {
++        neigh_del_from_map(neigh_info);
++        return;
++    }
++}
++
++
++/**
++ * @brief mnl callback processing a netlink neighbor message
++ */
++static int util_neigh_cb(const struct nlmsghdr *nlh, void *data)
++{
++    char ipstr[INET6_ADDRSTRLEN] = { 0 };
++    struct nlattr *tb[IFA_MAX + 1] = {};
++    struct nf_neigh_info neigh_info;
++    struct nf_neigh_context *ctxt;
++    struct ndmsg *ndm;
++    unsigned int add_entry;
++    unsigned int del_entry;
++    int af_family;
++    void *macaddr;
++    void *ipaddr;
++    int mnl_ret;
++    int ret;
++
++    ctxt = nf_neigh_get_context();
++    mnl_ret = MNL_CB_OK;
++
++    add_entry = 0;
++    del_entry = 0;
++
++    ndm = mnl_nlmsg_get_payload(nlh);
++    if (ndm == NULL) return MNL_CB_OK;
++
++    ret = mnl_attr_parse(nlh, sizeof(*ndm), util_data_attr_cb, tb);
++    if (ret == MNL_CB_ERROR) return MNL_CB_ERROR;
++
++    if (tb[NDA_DST] == NULL) return mnl_ret;
++
++    ipaddr = mnl_attr_get_payload(tb[NDA_DST]);
++
++    af_family = ndm->ndm_family;
++    inet_ntop(af_family, ipaddr, ipstr, sizeof(ipstr));
++
++    switch (ndm->ndm_state)
++    {
++        case NUD_PERMANENT:
++        case NUD_REACHABLE:
++        case NUD_STALE:
++            add_entry = 1;
++            break;
++        case NUD_INCOMPLETE:
++        case NUD_DELAY:
++        case NUD_PROBE:
++        case NUD_FAILED:
++        case NUD_NOARP:
++            del_entry = 1;
++            break;
++        default:
++            return mnl_ret;
++    }
++
++    macaddr = NULL;
++    if (tb[NDA_LLADDR] != NULL)
++    {
++        macaddr = mnl_attr_get_payload(tb[NDA_LLADDR]);
++    }
++
++    memset(&neigh_info, 0, sizeof(neigh_info));
++    neigh_info.af_family = af_family;
++    neigh_info.ipaddr = ipaddr;
++    neigh_info.hwaddr = macaddr;
++    neigh_info.add = add_entry;
++    neigh_info.del = del_entry;
++    if (ctxt->neigh_cb) ctxt->neigh_cb(&neigh_info);
++
++    return mnl_ret;
++}
++
++/**
++ * @brief dump the neighbors table for the given inet family
++ *
++ * @param af_family the inet family
++ */
++unsigned int nf_util_dump_neighs(int af_family)
++{
++    char buf[MNL_SOCKET_BUFFER_SIZE];
++    struct mnl_socket *nl;
++    struct nlmsghdr *nlh;
++    struct rtgenmsg *rt;
++    unsigned int portid;
++    unsigned int seq;
++    unsigned int rc;
++    int ret;
++
++    nlh = mnl_nlmsg_put_header(buf);
++    nlh->nlmsg_type = RTM_GETNEIGH;
++    nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
++    nlh->nlmsg_seq = seq = time(NULL) + 1;
++
++    rt = mnl_nlmsg_put_extra_header(nlh, sizeof(struct rtgenmsg));
++    rt->rtgen_family = af_family;
++
++    rc = 0;
++
++    nl = mnl_socket_open(NETLINK_ROUTE);
++    if (nl == NULL)
++    {
++        log_message(LOG_ERR," mnl_socket_open failed: %s", strerror(errno));
++        goto error;
++    }
++
++    if (mnl_socket_bind(nl, 0, MNL_SOCKET_AUTOPID) < 0)
++    {
++        log_message(LOG_ERR, "Failed to bind mnl socket: %s",strerror(errno));
++        goto error;
++    }
++
++    portid = mnl_socket_get_portid(nl);
++
++    if (mnl_socket_sendto(nl, nlh, nlh->nlmsg_len) < 0)
++    {
++        log_message(LOG_ERR,"mnl_socket_sendto failed: %s",strerror(errno));
++        goto error;
++    }
++
++    while ((ret = mnl_socket_recvfrom(nl, buf, sizeof(buf))) > 0)
++    {
++        ret = mnl_cb_run(buf, ret, seq, portid, util_neigh_cb, NULL);
++        if (ret <= MNL_CB_STOP)
++            break;
++    }
++
++    rc = 1;
++
++error:
++    if (nl) mnl_socket_close(nl);
++    return rc;
++}
++
++/**
++ * @brief ev callback to neighbor events
++ */
++static void read_mnl_neigh_cb(void)
++{
++    char rcv_buf[MNL_SOCKET_BUFFER_SIZE];
++    struct nf_neigh_context *ctxt;
++    int portid;
++    int ret;
++
++    ctxt = nf_neigh_get_context();
++
++    ret = mnl_socket_recvfrom(ctxt->neigh_mnl, rcv_buf, sizeof(rcv_buf));
++    if (ret == -1)
++    {
++        log_message(LOG_ERR," mnl_socket_recvfrom failed: %s\n", strerror(errno));
++        return;
++    }
++
++    portid = mnl_socket_get_portid(ctxt->neigh_mnl);
++    ret = mnl_cb_run(rcv_buf, ret, 0, portid, util_neigh_cb, NULL);
++
++    if (ret == -1) log_message(LOG_ERR," mnl_cb_run failed");
++}
++
++void *neigh_main_loop(void *data)
++{
++    struct nf_neigh_context *ctxt = data;
++
++    /* Cache the current arp table.*/
++    nf_util_dump_neighs(AF_INET);
++    nf_util_dump_neighs(AF_INET6);
++
++    while (!ctxt->quit)
++    {
++        read_mnl_neigh_cb();
++    }
++    return NULL;
++}
++
++int nf_neigh_event_init(void)
++{
++    struct nf_neigh_context *ctxt;
++    struct mnl_socket *nl;
++    int group;
++    int ret;
++
++    ctxt = nf_neigh_get_context();
++
++    if (ctxt->neigh_cb == NULL) return 0;
++
++    nl = mnl_socket_open(NETLINK_ROUTE);
++    if (nl == NULL)
++    {
++        log_message(LOG_ERR," mnl_socket_open failed: %s", strerror(errno));
++        return -1;
++    }
++
++    ret = mnl_socket_bind(nl, 0, MNL_SOCKET_AUTOPID);
++    if (ret < 0)
++    {
++        log_message(LOG_ERR," mnl_socket_bind failed: %s", strerror(errno));
++        return -1;
++    }
++
++    group = RTNLGRP_NEIGH;
++    ret = mnl_socket_setsockopt(nl, NETLINK_ADD_MEMBERSHIP, &group,
++                                sizeof(int));
++    if (ret < 0)
++    {
++        log_message(LOG_ERR," mnl_socket_setsockopt failed: %s", strerror(errno));
++        return -1;
++    }
++
++    ctxt->neigh_mnl = nl;
++    ctxt->neigh_fd = mnl_socket_get_fd(nl);
++    log_message(LOG_INFO," nf_neigh_context initialized");
++
++    return 0;
++}
++
++int nf_neigh_init(void)
++{
++    struct nf_neigh_context *ctxt;
++    int ret;
++
++    ctxt = nf_neigh_get_context();
++    memset(ctxt, 0, sizeof(*ctxt));
++
++    ctxt->neigh_cb = process_neigh_event;
++    pthread_mutex_init(&ctxt->arptable_lock, NULL);
++    ctxt->arptable = orderedmap_create(ARP_BUCKETS);
++
++    if (ctxt->arptable == NULL)
++    {
++        log_message(LOG_ERR," neighbor event: couldn't get hash map");
++        goto err;
++    }
++
++    ret = nf_neigh_event_init();
++    if (ret)
++    {
++        log_message(LOG_ERR," neighbor event init failure");
++        goto err;
++    }
++
++    return 0;
++
++err:
++    orderedmap_destroy(ctxt->arptable);
++    return -1;
++}
++
++int nf_neigh_exit(void)
++{
++    struct nf_neigh_context *ctxt;
++
++    ctxt = nf_neigh_get_context();
++
++    ctxt->quit = 1;
++    mnl_socket_close(ctxt->neigh_mnl);
++
++    orderedmap_destroy(ctxt->arptable);
++    return 0;
++}
+--- /dev/null
++++ b/src/nf_util_neigh.h
+@@ -0,0 +1,59 @@
++#ifndef NF_UTILS_H_INCLUDED
++#define NF_UTILS_H_INCLUDED
++
++#include <arpa/inet.h>
++#include "orderedmap.h"
++
++#define PRI_macaddr_t  "%02x:%02x:%02x:%02x:%02x:%02x"
++
++#define FMT_macaddr_t(x)     (x).addr[0], (x).addr[1], (x).addr[2], (x).addr[3], (x).addr[4], (x).addr[5]
++#define FMT_macaddr_pt(x)    (x)->addr[0], (x)->addr[1], (x)->addr[2], (x)->addr[3], (x)->addr[4],(x)->addr[5]
++#define MAX_MAC_STR_SIZE 18
++
++typedef struct { uint8_t addr[6]; } macaddr_t;
++
++struct nf_neigh_info
++{
++    int  af_family;
++    void *ipaddr;
++    void *hwaddr;
++    unsigned int   add;
++    unsigned int   del;
++
++};
++
++typedef void (*process_nl_event_cb)(struct nf_neigh_info *neigh_info);
++
++typedef struct nf_neigh_context
++{
++    pthread_t neigh_thread;
++
++    struct mnl_socket *neigh_mnl;
++    process_nl_event_cb neigh_cb;
++    int neigh_fd;
++    unsigned int quit;
++
++    orderedmap arptable;
++    pthread_mutex_t arptable_lock;
++} nf_neigh_context;
++
++
++void *neigh_main_loop(void *data);
++
++struct nf_neigh_context *nf_neigh_get_context(void);
++
++unsigned int nf_util_dump_neighs(int af_family);
++
++unsigned int nf_neigh_get_mac(const char *ip, char *mac);
++
++int nf_neigh_event_init(void);
++
++int neigh_add_to_map(struct nf_neigh_info *neigh_info);
++
++int neigh_del_from_map(struct nf_neigh_info *neigh_info);
++
++int nf_neigh_init(void);
++
++int nf_neigh_exit(void);
++
++#endif /* NF_UTILS_H_INCLUDED */
+--- a/src/reqs.c
++++ b/src/reqs.c
+@@ -592,6 +592,20 @@ static int add_xtinyproxy_header (struct
+ }
+ #endif /* XTINYPROXY */
+ 
++#ifdef XTINYPROXYMAC_ENABLE
++/*
++ * Add the X-Tinyproxy-MAC header to the collection of headers being sent to
++ * the server.
++ */
++static int add_xtinyproxymac_header (struct conn_s *connptr)
++{
++        assert (connptr && connptr->server_fd >= 0);
++        return write_message (connptr->server_fd,
++                              "X-Tinyproxy-MAC: %s\r\n", connptr->client_mac_addr);
++}
++#endif /* XTINYPROXYMAC */
++
++
+ /*
+  * Take a complete header line and break it apart (into a key and the data.)
+  * Now insert this information into the hashmap for the connection so it
+@@ -936,6 +950,11 @@ process_client_headers (struct conn_s *c
+         if (config->add_xtinyproxy)
+                 add_xtinyproxy_header (connptr);
+ #endif
++#if defined(XTINYPROXYMAC_ENABLE)
++        if (config->add_xtinyproxymac)
++		add_xtinyproxymac_header (connptr);
++#endif
++
+ 
+         /* Write the final "blank" line to signify the end of the headers */
+         if (safe_write (connptr->server_fd, "\r\n", 2) < 0)
+--- a/src/conf-tokens.c
++++ b/src/conf-tokens.c
+@@ -43,6 +43,7 @@ config_directive_find (register const ch
+       {"disableviaheader", CD_disableviaheader},
+       {"deny", CD_deny},
+       {"xtinyproxy", CD_xtinyproxy},
++      {"xtinyproxy-mac", CD_xtinyproxy_mac},
+       {"reversepath", CD_reversepath},
+       {"bind", CD_bind},
+       {"maxclients", CD_maxclients},
+--- a/src/conf-tokens.h
++++ b/src/conf-tokens.h
+@@ -11,6 +11,7 @@ CD_defaulterrorfile,
+ CD_statfile,
+ CD_stathost,
+ CD_xtinyproxy,
++CD_xtinyproxy_mac,
+ CD_syslog,
+ CD_bindsame,
+ CD_disableviaheader,

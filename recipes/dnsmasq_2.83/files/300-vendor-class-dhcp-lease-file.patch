@@ -2,7 +2,7 @@ Index: dnsmasq-2.83/src/dnsmasq.h
 ===================================================================
 --- dnsmasq-2.83.orig/src/dnsmasq.h
 +++ dnsmasq-2.83/src/dnsmasq.h
-@@ -745,6 +745,7 @@ struct dhcp_lease {
+@@ -746,6 +746,7 @@ struct dhcp_lease {
    char *hostname, *fqdn; /* name from client-hostname option or config */
    char *old_hostname;    /* hostname before it moved to another lease */
    char *fingerprint;
@@ -10,7 +10,7 @@ Index: dnsmasq-2.83/src/dnsmasq.h
    int flags;
    time_t expires;        /* lease expiry */
  #ifdef HAVE_BROKEN_RTC
-@@ -1481,6 +1482,7 @@ void lease_add_extradata(struct dhcp_lea
+@@ -1482,6 +1483,7 @@ void lease_add_extradata(struct dhcp_lea
  			 unsigned int len, int delim);
  #endif
  void lease_add_fingerprint(struct dhcp_lease *lease, unsigned char *req_options);
@@ -26,7 +26,7 @@ Index: dnsmasq-2.83/src/lease.c
    int items;
    char *domain = NULL;
    char *dhcp_fingerprint = NULL;
-+  char *dhcp_vendor = NULL;
++  char dhcp_vendor[256];
  
    *daemon->dhcp_buff3 = *daemon->dhcp_buff2 = '\0';
  

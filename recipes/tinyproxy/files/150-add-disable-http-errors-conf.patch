@@ -1,0 +1,80 @@
+--- a/src/conf.c
++++ b/src/conf.c
+@@ -152,6 +152,7 @@ static HANDLE_FUNC (handle_timeout);
+ static HANDLE_FUNC (handle_user);
+ static HANDLE_FUNC (handle_viaproxyname);
+ static HANDLE_FUNC (handle_disableviaheader);
++static HANDLE_FUNC (handle_disablehttperrors);
+ static HANDLE_FUNC (handle_xtinyproxy);
+ static HANDLE_FUNC (handle_xtinyproxymac);
+ 
+@@ -199,6 +200,7 @@ struct {
+         STDCONF (syslog, BOOL, handle_syslog),
+         STDCONF (bindsame, BOOL, handle_bindsame),
+         STDCONF (disableviaheader, BOOL, handle_disableviaheader),
++        STDCONF (disablehttperrors, BOOL, handle_disablehttperrors),
+         /* integer arguments */
+         STDCONF (port, INT, handle_port),
+         STDCONF (maxclients, INT, handle_maxclients),
+@@ -678,6 +680,19 @@ static HANDLE_FUNC (handle_disableviahea
+         return 0;
+ }
+ 
++static HANDLE_FUNC (handle_disablehttperrors)
++{
++        int r = set_bool_arg (&conf->disable_httperrors, line, &match[2]);
++
++        if (r) {
++                return r;
++        }
++
++        log_message (LOG_INFO,
++                     "Disabling sending http errors.");
++        return 0;
++}
++
+ static HANDLE_FUNC (handle_defaulterrorfile)
+ {
+         return set_string_arg (&conf->errorpage_undef, line, &match[2]);
+--- a/src/conf.h
++++ b/src/conf.h
+@@ -81,6 +81,7 @@ struct config_s {
+         char *via_proxy_name;
+ 
+         unsigned int disable_viaheader; /* boolean */
++        unsigned int disable_httperrors; /* boolean */
+ 
+         /*
+          * Error page support.  Map error numbers to file paths.
+--- a/src/reqs.c
++++ b/src/reqs.c
+@@ -1505,7 +1505,8 @@ static void handle_connection_failure(st
+                 update_stats (STAT_BADCONN);
+         }
+ 
+-        if (connptr->error_variables) {
++        if (connptr->error_variables &&
++            config->disable_httperrors == 0) {
+                 send_http_error_message (connptr);
+         } else if (connptr->show_stats) {
+                 showstats (connptr);
+--- a/src/conf-tokens.c
++++ b/src/conf-tokens.c
+@@ -41,6 +41,7 @@ config_directive_find (register const ch
+       {"minspareservers", CD_minspareservers},
+       {"user", CD_user},
+       {"disableviaheader", CD_disableviaheader},
++      {"disablehttperrors", CD_disablehttperrors},
+       {"deny", CD_deny},
+       {"xtinyproxy", CD_xtinyproxy},
+       {"xtinyproxy-mac", CD_xtinyproxy_mac},
+--- a/src/conf-tokens.h
++++ b/src/conf-tokens.h
+@@ -15,6 +15,7 @@ CD_xtinyproxy_mac,
+ CD_syslog,
+ CD_bindsame,
+ CD_disableviaheader,
++CD_disablehttperrors,
+ CD_port,
+ CD_maxclients,
+ CD_maxspareservers,

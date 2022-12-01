@@ -1,0 +1,19 @@
+--- a/src/sock.c
++++ b/src/sock.c
+@@ -269,6 +269,16 @@ static int listen_on_one_socket(struct a
+                 }
+         }
+ 
++#ifdef TRANSPARENT_PROXY
++        ret = setsockopt(listenfd, SOL_IP, IP_TRANSPARENT, &on, sizeof(on));
++        if (ret != 0) {
++              log_message(LOG_ERR,
++                          "setsockopt failed to set IP_TRANSARENT: %s",
++                          strerror(errno));
++        }
++
++#endif /* TRANSPARENT_PROXY */
++
+         ret = bind(listenfd, ad->ai_addr, ad->ai_addrlen);
+         if (ret != 0) {
+                log_message(LOG_ERR, "bind failed: %s", strerror (errno));
