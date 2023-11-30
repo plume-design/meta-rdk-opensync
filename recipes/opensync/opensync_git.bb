@@ -23,7 +23,7 @@ SRCREV_vendor ?= "${AUTOREV}"
 SRCREV_service-provider ?= "${AUTOREV}"
 
 OPENSYNC_DEFAULT_PROTOCOL ?= "https"
-OPENSYNC_DEFAULT_BRANCH ?= "osync_5.4.0"
+OPENSYNC_DEFAULT_BRANCH ?= "osync_5.6.0"
 
 OPENSYNC_CORE_REPO_PATH ?= "git://git@github.com/plume-design/opensync.git"
 OPENSYNC_CORE_REPO_PROTOCOL ?= "${OPENSYNC_DEFAULT_PROTOCOL}"
@@ -109,6 +109,17 @@ do_diffconfig() {
     bbplain "Fragment file generated $(readlink -f fragment.cfg)"
 }
 
+do_version_long() {
+    cd ${S}
+    bbplain VERSION_LONG=$(
+        make ${EXTRA_OEMAKE} version_long \
+            BUILD_NUMBER=${BUILD_NUMBER} \
+            VERSION_APPEND=${VERSION_APPEND} \
+            | tail -n 1)
+}
+
+do_version_long[depends] = "opensync:do_fetch opensync:do_patch python3-kconfiglib-native:do_populate_sysroot"
+
 FILES_${PN} = " \
     ${sysconfdir}/udhcpc.user \
     ${prefix}/sbin/* \
@@ -143,3 +154,4 @@ FILES_${PN}-extra-tools = " \
 PACKAGES = "${PN}-dbg ${PN}-extra-tools ${PN}-extras ${PN}"
 
 REQUIRED_DISTRO_FEATURES= "systemd"
+addtask version_long
